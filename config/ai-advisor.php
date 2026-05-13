@@ -63,6 +63,14 @@ return [
         'blocked_product_types' => [],
         // Only import products in these availability states
         'allowed_availability' => ['in stock', 'preorder'],
+        // Approved image CDN domains
+        'allowed_image_domains' => [
+            '39dollarglasses.com',
+            'www.39dollarglasses.com',
+            'cdn.39dollarglasses.com',
+            'cdn.eyeglasses39.net',
+            'images.39dollarglasses.com',
+        ],
     ],
 
     /*
