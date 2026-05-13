@@ -24,7 +24,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'feed' => [
-        'url'     => env('AI_ADVISOR_FEED_URL', ''),
+        // Multiple feed URLs — primary + optional extras (e.g. kids, sunglasses)
+        'urls' => array_filter([
+            env('AI_ADVISOR_FEED_URL', ''),
+            env('AI_ADVISOR_FEED_URL_2', ''),
+            env('AI_ADVISOR_FEED_URL_3', ''),
+        ]),
         'format'  => env('AI_ADVISOR_FEED_FORMAT', 'xml'), // xml | tsv
         'timeout' => env('AI_ADVISOR_FEED_TIMEOUT', 60),   // seconds
 

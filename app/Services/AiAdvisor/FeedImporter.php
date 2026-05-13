@@ -21,50 +21,62 @@ class FeedImporter
     public function run(): AiImportLog
     {
         $startedAt = now();
-        $feedUrl   = config('ai-advisor.feed.url');
+        $feedUrls  = config('ai-advisor.feed.urls', []);
         $format    = config('ai-advisor.feed.format', 'xml');
         $timeout   = config('ai-advisor.feed.timeout', 60);
 
         $log = AiImportLog::create([
-            'feed_url' => $feedUrl,
+            'feed_url' => implode(', ', $feedUrls),
             'status'   => 'running',
         ]);
 
         try {
-            // 1. Fetch
-            Log::info('[AiAdvisor] Fetching feed.', ['url' => $feedUrl]);
-            $raw = $this->fetcher->fetch($feedUrl, $timeout);
+            $allParsed   = [];
+            $allItems    = [];
+            $allSkipped  = 0;
+            $allWarnings = [];
 
-            // 2. Parse
-            Log::info('[AiAdvisor] Parsing feed.', ['format' => $format]);
-            $parsed = $this->parser->parse($raw, $format);
+            foreach ($feedUrls as $feedUrl) {
+                // 1. Fetch
+                Log::info('[AiAdvisor] Fetching feed.', ['url' => $feedUrl]);
+                $raw = $this->fetcher->fetch($feedUrl, $timeout);
 
-            // 3. Sanitize
-            Log::info('[AiAdvisor] Sanitizing.', ['raw_count' => count($parsed)]);
-            ['items' => $items, 'skipped' => $skipped, 'warnings' => $warnings] =
-                $this->sanitizer->sanitizeBatch($parsed);
+                // 2. Parse
+                $parsed = $this->parser->parse($raw, $format);
+                $allParsed = array_merge($allParsed, $parsed);
 
-            // 4. Tag
-            Log::info('[AiAdvisor] Tagging.', ['clean_count' => count($items)]);
-            $items = array_map(fn ($item) => $this->tagger->tag($item), $items);
+                // 3. Sanitize
+                ['items' => $items, 'skipped' => $skipped, 'warnings' => $warnings] =
+                    $this->sanitizer->sanitizeBatch($parsed);
+
+                $allSkipped  += $skipped;
+                $allWarnings  = array_merge($allWarnings, $warnings);
+
+                // 4. Tag
+                $allItems = array_merge($allItems, array_map(
+                    fn ($item) => $this->tagger->tag($item), $items
+                ));
+            }
+
+            Log::info('[AiAdvisor] All feeds parsed.', ['total' => count($allParsed)]);
 
             // 5. Upsert
             Log::info('[AiAdvisor] Upserting to catalog.');
-            [$inserted, $updated] = $this->upsertProducts($items);
+            [$inserted, $updated] = $this->upsertProducts($allItems);
 
-            // 6. Deactivate products not in this feed run
+            // 6. Deactivate products not seen in any feed this run
             $deactivated = $this->deactivateMissing($startedAt);
 
             $duration = (int) $startedAt->diffInSeconds(now());
 
             $log->update([
-                'status'               => empty($warnings) ? 'success' : 'partial',
-                'products_fetched'     => count($parsed),
+                'status'               => empty($allWarnings) ? 'success' : 'partial',
+                'products_fetched'     => count($allParsed),
                 'products_inserted'    => $inserted,
                 'products_updated'     => $updated,
                 'products_deactivated' => $deactivated,
-                'products_skipped'     => $skipped,
-                'warnings'             => !empty($warnings) ? $warnings : null,
+                'products_skipped'     => $allSkipped,
+                'warnings'             => !empty($allWarnings) ? $allWarnings : null,
                 'duration_seconds'     => $duration,
             ]);
 
@@ -72,7 +84,7 @@ class FeedImporter
                 'inserted'    => $inserted,
                 'updated'     => $updated,
                 'deactivated' => $deactivated,
-                'skipped'     => $skipped,
+                'skipped'     => $allSkipped,
                 'duration_s'  => $duration,
             ]);
 
