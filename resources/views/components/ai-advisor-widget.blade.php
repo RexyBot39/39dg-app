@@ -24,21 +24,18 @@
 {{-- Respect master feature flag and per-instance override --}}
 @if(config('ai-advisor.enabled', false) && $enabled)
 
+    {{-- Output CSS inline so it loads regardless of @stack('styles') placement --}}
     @once
-        @push('styles')
-            <link rel="stylesheet" href="{{ asset('ai-advisor/advisor-widget.css') }}?v={{ config('app.version', '1') }}">
-        @endpush
+        <link rel="stylesheet" href="{{ asset('ai-advisor/advisor-widget.css') }}?v={{ config('app.version', '1') }}">
     @endonce
 
-    @push('scripts')
-        <script>
-            window.advisorConfig = {
-                apiUrl:      @js($apiUrl),
-                pageContext: @js($pageContext),
-                supportUrl:  @js($supportUrl),
-            };
-        </script>
-        <script src="{{ asset('ai-advisor/advisor-widget.js') }}?v={{ config('app.version', '1') }}" defer></script>
-    @endpush
+    <script>
+        window.advisorConfig = {
+            apiUrl:      @js($apiUrl),
+            pageContext: @js($pageContext),
+            supportUrl:  @js($supportUrl),
+        };
+    </script>
+    <script src="{{ asset('ai-advisor/advisor-widget.js') }}?v={{ config('app.version', '1') }}" defer></script>
 
 @endif
