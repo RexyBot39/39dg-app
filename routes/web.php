@@ -2,6 +2,7 @@
 
 use App\Models\AiPublicProduct;
 use App\Services\AiAdvisor\FeedImporter;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -30,15 +31,27 @@ Route::get('/debug-catalog/{secret}', function (string $secret) {
     if ($secret !== env('IMPORT_SECRET') || !env('IMPORT_SECRET')) {
         abort(403);
     }
-    $total       = AiPublicProduct::count();
-    $active      = AiPublicProduct::where('is_active', true)->count();
+
+    // Test DB connection
+    try {
+        DB::connection()->getPdo();
+        $dbStatus = 'connected';
+        $dbName   = DB::connection()->getDatabaseName();
+    } catch (\Throwable $e) {
+        return response()->json(['db_error' => $e->getMessage()]);
+    }
+
+    $total         = AiPublicProduct::count();
+    $active        = AiPublicProduct::where('is_active', true)->count();
     $recommendable = AiPublicProduct::where('is_recommendable', true)->count();
-    $inStock     = AiPublicProduct::where('availability', 'in stock')->count();
-    $hasUrl      = AiPublicProduct::whereNotNull('public_url')->where('public_url', '!=', '')->count();
-    $hasPrice    = AiPublicProduct::whereNotNull('price')->where('price', '>', 0)->count();
-    $sample      = AiPublicProduct::first();
+    $inStock       = AiPublicProduct::where('availability', 'in stock')->count();
+    $hasUrl        = AiPublicProduct::whereNotNull('public_url')->where('public_url', '!=', '')->count();
+    $hasPrice      = AiPublicProduct::whereNotNull('price')->where('price', '>', 0)->count();
+    $sample        = AiPublicProduct::first();
+
     return response()->json(compact(
-        'total', 'active', 'recommendable', 'inStock', 'hasUrl', 'hasPrice', 'sample'
+        'dbStatus', 'dbName', 'total', 'active', 'recommendable',
+        'inStock', 'hasUrl', 'hasPrice', 'sample'
     ));
 });
 
