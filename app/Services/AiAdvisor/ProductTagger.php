@@ -26,6 +26,7 @@ class ProductTagger
         'acetate'   => ['acetate', 'zyl', 'zylonite', 'cellulose'],
         'metal'     => ['metal', 'stainless', 'stainless steel', 'monel', 'nickel', 'alloy', 'steel'],
         'tr90'      => ['tr-90', 'tr90', 'memory', 'flexible plastic', 'ultem', 'grilamid'],
+        'plastic'   => ['plastic', 'acrylic', 'polycarbonate', 'nylon'],
         'mixed'     => ['mixed', 'combination', 'combo', 'hybrid'],
     ];
 
