@@ -56,13 +56,24 @@ class ProductTagger
     {
         $searchText = $this->buildSearchText($item);
 
-        $item['frame_shape']            = $this->detectShape($searchText, $item);
-        $item['frame_material']         = $this->detectMaterial($searchText, $item);
-        $item['frame_size_category']    = $this->detectSizeCategory($item['size'] ?? '');
-        $item['style_tags']             = $this->detectStyleTags($searchText);
-        $item['lightweight']            = $this->detectLightweight($item['frame_material'] ?? '', $item['frame_shape'] ?? '');
-        $item['progressive_friendly']   = $this->detectProgressiveFriendly($item);
-        $item['strong_rx_friendly']     = $this->detectStrongRxFriendly($item);
+        // Use explicit CSV values when present; fall back to keyword detection for XML/TSV feeds
+        $item['frame_shape']    = $item['frame_shape']    ?? $this->detectShape($searchText, $item);
+        $item['frame_material'] = $item['frame_material'] ?? $this->detectMaterial($searchText, $item);
+
+        // Prefer optical lens_width_mm (CSV) over the raw size string for category accuracy
+        $item['frame_size_category'] = isset($item['lens_width_mm']) && $item['lens_width_mm'] > 0
+            ? $this->sizeFromMm((int) $item['lens_width_mm'])
+            : $this->detectSizeCategory($item['size'] ?? '');
+
+        // Style tags: use pre-populated array from CSV, else detect
+        $item['style_tags'] = $item['style_tags'] ?? $this->detectStyleTags($searchText);
+
+        $item['lightweight'] = $this->detectLightweight($item['frame_material'] ?? '', $item['frame_shape'] ?? '');
+
+        // Explicit CSV booleans take precedence over heuristic detection
+        $item['progressive_friendly'] = $item['progressive_friendly'] ?? $this->detectProgressiveFriendly($item);
+        $item['strong_rx_friendly']   = $item['strong_rx_friendly']   ?? $this->detectStrongRxFriendly($item);
+
         $item['smart_glasses_relevant'] = $this->detectSmartGlasses($searchText);
         $item['blue_light_relevant']    = $this->detectBlueLightRelevant($searchText);
         $item['budget_tier']            = $this->detectBudgetTier($item['sale_price'] ?? $item['price'] ?? null);
@@ -125,6 +136,16 @@ class ProductTagger
         }
 
         return null;
+    }
+
+    private function sizeFromMm(int $lensWidthMm): string
+    {
+        return match (true) {
+            $lensWidthMm <= 48 => 'small',
+            $lensWidthMm <= 53 => 'medium',
+            $lensWidthMm <= 57 => 'large',
+            default            => 'x-large',
+        };
     }
 
     private function detectSizeCategory(string $sizeString): ?string

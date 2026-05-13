@@ -123,10 +123,9 @@ class AdvisorFunctionHandler
         $limit   = config('ai-advisor.recommendations.max_products', 5);
         $results = $query->orderBy('price')->limit($limit)->get();
 
-        // If filters returned nothing, do a broader search without the more
-        // restrictive shape/material/size filters
-        if ($results->isEmpty() && (!empty($filters['frame_shape']) || !empty($filters['frame_material']))) {
-            Log::info('[AiAdvisor] No products matched strict filters; relaxing shape/material filters.');
+        // If filters returned nothing, broaden by dropping shape/material/size filters
+        if ($results->isEmpty() && (!empty($filters['frame_shape']) || !empty($filters['frame_material']) || !empty($filters['frame_size_category']))) {
+            Log::info('[AiAdvisor] No products matched strict filters; relaxing shape/material/size filters.');
 
             $fallbackQuery = AiPublicProduct::recommendable();
 
@@ -163,12 +162,18 @@ class AdvisorFunctionHandler
                 'image_url'     => $product->image_url,
                 'public_url'    => $product->public_url,
                 'color'         => $product->color,
-                'size'          => $product->size,
                 'frame_shape'   => $product->frame_shape,
                 'frame_material'=> $product->frame_material,
+                'size_category' => $product->frame_size_category,
                 'style_tags'    => $product->style_tags ?? [],
                 'lightweight'   => $product->lightweight,
                 'progressive_friendly' => $product->progressive_friendly,
+                'frame_dimensions' => $product->lens_width_mm ? array_filter([
+                    'lens_width_mm'   => $product->lens_width_mm,
+                    'bridge_mm'       => $product->bridge_mm,
+                    'temple_mm'       => $product->temple_mm,
+                    'frame_height_mm' => $product->frame_height_mm,
+                ]) : null,
             ];
         })->toArray();
 

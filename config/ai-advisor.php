@@ -30,7 +30,7 @@ return [
             env('AI_ADVISOR_FEED_URL_2', ''),
             env('AI_ADVISOR_FEED_URL_3', ''),
         ]),
-        'format'  => env('AI_ADVISOR_FEED_FORMAT', 'xml'), // xml | tsv
+        'format'  => env('AI_ADVISOR_FEED_FORMAT', 'xml'), // xml | tsv | csv
         'timeout' => env('AI_ADVISOR_FEED_TIMEOUT', 60),   // seconds
 
         // How often the scheduler runs (in hours). Set in Kernel.php.

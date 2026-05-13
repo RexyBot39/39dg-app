@@ -30,6 +30,10 @@ class AiPublicProduct extends Model
         'frame_shape',
         'frame_material',
         'frame_size_category',
+        'lens_width_mm',
+        'bridge_mm',
+        'temple_mm',
+        'frame_height_mm',
         'style_tags',
         'lightweight',
         'progressive_friendly',
@@ -45,6 +49,10 @@ class AiPublicProduct extends Model
     protected $casts = [
         'price'                 => 'decimal:2',
         'sale_price'            => 'decimal:2',
+        'lens_width_mm'         => 'integer',
+        'bridge_mm'             => 'integer',
+        'temple_mm'             => 'integer',
+        'frame_height_mm'       => 'integer',
         'style_tags'            => 'array',
         'lightweight'           => 'boolean',
         'progressive_friendly'  => 'boolean',
@@ -107,17 +115,29 @@ class AiPublicProduct extends Model
 
     public function toAdvisorArray(): array
     {
-        return [
+        $arr = [
             'product_id'  => (string) $this->id,
             'title'       => $this->title,
             'price'       => $this->display_price,
             'image_url'   => $this->image_url,
             'public_url'  => $this->public_url,
             'color'       => $this->color,
-            'size'        => $this->size,
             'shape'       => $this->frame_shape,
             'material'    => $this->frame_material,
+            'size_category' => $this->frame_size_category,
             'style_tags'  => $this->style_tags ?? [],
         ];
+
+        // Include optical dimensions when available (CSV-sourced products)
+        if ($this->lens_width_mm) {
+            $arr['frame_dimensions'] = array_filter([
+                'lens_width_mm'   => $this->lens_width_mm,
+                'bridge_mm'       => $this->bridge_mm,
+                'temple_mm'       => $this->temple_mm,
+                'frame_height_mm' => $this->frame_height_mm,
+            ]);
+        }
+
+        return $arr;
     }
 }
