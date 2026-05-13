@@ -1,9 +1,27 @@
 <?php
 
+use App\Services\AiAdvisor\FeedImporter;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// One-time feed import trigger — protected by IMPORT_SECRET env var
+Route::get('/run-import/{secret}', function (string $secret, FeedImporter $importer) {
+    if ($secret !== env('IMPORT_SECRET') || !env('IMPORT_SECRET')) {
+        abort(403);
+    }
+    set_time_limit(300);
+    $log = $importer->run();
+    return response()->json([
+        'status'            => $log->status,
+        'products_fetched'  => $log->products_fetched,
+        'products_inserted' => $log->products_inserted,
+        'products_updated'  => $log->products_updated,
+        'duration_seconds'  => $log->duration_seconds,
+        'warnings'          => $log->warnings,
+    ]);
 });
 
 // Advisor test pages — remove after testing
