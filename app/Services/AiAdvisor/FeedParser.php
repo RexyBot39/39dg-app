@@ -19,6 +19,7 @@ class FeedParser
             'xml'  => $this->parseXml($content),
             'tsv'  => $this->parseTsv($content),
             'csv'  => $this->parseCsv($content),
+            'json' => $this->parseJson($content),
             default => throw new RuntimeException("Unsupported feed format: {$format}"),
         };
     }
@@ -214,6 +215,80 @@ class FeedParser
             'gender'              => strtolower(trim($row['gender'] ?? '')),
             'material'            => $this->cleanString($row['material'] ?? ''),
             // Explicit enrichment — tagger will use these directly when non-null
+            'frame_shape'         => $shape,
+            'frame_material'      => $material,
+            'lens_width_mm'       => $lensWidth,
+            'bridge_mm'           => $bridge,
+            'temple_mm'           => $temple,
+            'frame_height_mm'     => $frameHeight,
+            'progressive_friendly'=> $progressiveFriendly,
+            'strong_rx_friendly'  => $strongRxFriendly,
+            'style_tags'          => $styleTags,
+        ];
+    }
+
+    private function parseJson(string $content): array
+    {
+        $data = json_decode($content, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('JSON parse error: ' . json_last_error_msg());
+        }
+
+        if (!is_array($data)) {
+            throw new RuntimeException('JSON feed must be a top-level array of product objects.');
+        }
+
+        return array_map(fn ($row) => $this->normalizeJsonItem($row), $data);
+    }
+
+    private function normalizeJsonItem(array $row): array
+    {
+        // Price — accept numeric or string
+        $price     = isset($row['price'])      ? (float) $row['price']      : null;
+        $salePrice = isset($row['sale_price']) ? (float) $row['sale_price'] : null;
+
+        // frame_shape / frame_material — validate against allowed enums
+        $shapeRaw = strtolower(trim((string) ($row['frame_shape'] ?? '')));
+        $shape    = in_array($shapeRaw, self::VALID_SHAPES, true) ? $shapeRaw : null;
+
+        $materialRaw = strtolower(trim((string) ($row['frame_material'] ?? '')));
+        $material    = in_array($materialRaw, self::VALID_MATERIALS, true) ? $materialRaw : null;
+
+        // Optical dimensions — accept int, float, or string
+        $lensWidth   = isset($row['lens_width_mm'])   && (int) $row['lens_width_mm']   > 0 ? (int) $row['lens_width_mm']   : null;
+        $bridge      = isset($row['bridge_mm'])        && (int) $row['bridge_mm']        > 0 ? (int) $row['bridge_mm']        : null;
+        $temple      = isset($row['temple_mm'])        && (int) $row['temple_mm']        > 0 ? (int) $row['temple_mm']        : null;
+        $frameHeight = isset($row['frame_height_mm'])  && (int) $row['frame_height_mm']  > 0 ? (int) $row['frame_height_mm']  : null;
+
+        // Booleans — native JSON booleans OR "1"/"0"/"true"/"false" strings
+        $progressiveFriendly = isset($row['progressive_friendly']) ? (bool) $row['progressive_friendly'] : null;
+        $strongRxFriendly    = isset($row['strong_rx_friendly'])   ? (bool) $row['strong_rx_friendly']   : null;
+
+        // style_tags — native JSON array preferred; also accept pipe-separated string
+        $styleTags = null;
+        if (isset($row['style_tags'])) {
+            if (is_array($row['style_tags'])) {
+                $styleTags = array_values(array_filter(array_map('trim', $row['style_tags'])));
+            } elseif (is_string($row['style_tags']) && $row['style_tags'] !== '') {
+                $styleTags = array_values(array_filter(array_map('trim', explode('|', $row['style_tags']))));
+            }
+        }
+
+        return [
+            'feed_product_id'     => trim((string) ($row['id'] ?? '')),
+            'title'               => $this->cleanString((string) ($row['title'] ?? '')),
+            'description'         => $this->cleanString((string) ($row['description'] ?? '')),
+            'public_url'          => $this->cleanUrl((string) ($row['url'] ?? '')),
+            'image_url'           => $this->cleanUrl((string) ($row['image_url'] ?? '')),
+            'price'               => $price > 0 ? $price : null,
+            'sale_price'          => $salePrice > 0 ? $salePrice : null,
+            'availability'        => strtolower(trim((string) ($row['availability'] ?? 'out of stock'))),
+            'brand'               => $this->cleanString((string) ($row['brand'] ?? '')),
+            'color'               => $this->cleanString((string) ($row['color'] ?? '')),
+            'gender'              => strtolower(trim((string) ($row['gender'] ?? ''))),
+            'material'            => $this->cleanString((string) ($row['material'] ?? '')),
+            // Explicit enrichment — tagger uses these directly when non-null
             'frame_shape'         => $shape,
             'frame_material'      => $material,
             'lens_width_mm'       => $lensWidth,

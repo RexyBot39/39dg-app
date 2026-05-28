@@ -14,7 +14,7 @@ class FeedFetcher
         }
 
         $response = Http::timeout($timeoutSeconds)
-            ->withHeaders(['Accept' => 'application/xml, text/xml, text/csv, text/plain, text/tab-separated-values, */*'])
+            ->withHeaders(['Accept' => 'application/json, application/xml, text/xml, text/csv, text/plain, text/tab-separated-values, */*'])
             ->get($url);
 
         if ($response->failed()) {
