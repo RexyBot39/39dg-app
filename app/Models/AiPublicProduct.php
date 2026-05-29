@@ -44,6 +44,7 @@ class AiPublicProduct extends Model
         'is_active',
         'is_recommendable',
         'last_seen_in_feed',
+        'ai_enriched_at',
     ];
 
     protected $casts = [
@@ -62,6 +63,7 @@ class AiPublicProduct extends Model
         'is_active'             => 'boolean',
         'is_recommendable'      => 'boolean',
         'last_seen_in_feed'     => 'datetime',
+        'ai_enriched_at'        => 'datetime',
     ];
 
     public function scopeRecommendable(Builder $query): Builder

@@ -2,6 +2,7 @@
 
 use App\Models\AiPublicProduct;
 use App\Services\AiAdvisor\FeedImporter;
+use App\Services\AiAdvisor\ProductEnricher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,28 @@ Route::get('/debug-catalog/{secret}', function (string $secret) {
         'dbStatus', 'dbName', 'total', 'active', 'recommendable',
         'inStock', 'hasUrl', 'hasPrice', 'sample'
     ));
+});
+
+// AI enrichment — fills style_tags, frame_shape, frame_material via OpenAI vision
+// Call repeatedly until remaining = 0. Default batch = 40 products per call.
+// Optional: /run-enrichment/{secret}?batch=20 to adjust batch size
+Route::get('/run-enrichment/{secret}', function (string $secret, ProductEnricher $enricher) {
+    if ($secret !== env('IMPORT_SECRET') || !env('IMPORT_SECRET')) {
+        abort(403);
+    }
+    set_time_limit(300);
+    $batch  = (int) request('batch', 40);
+    $result = $enricher->enrichBatch(max(1, min($batch, 100)));
+    return response()->json($result);
+});
+
+// Reset enrichment — clears ai_enriched_at so all products get re-enriched on next run
+Route::get('/reset-enrichment/{secret}', function (string $secret) {
+    if ($secret !== env('IMPORT_SECRET') || !env('IMPORT_SECRET')) {
+        abort(403);
+    }
+    $count = AiPublicProduct::whereNotNull('ai_enriched_at')->update(['ai_enriched_at' => null]);
+    return response()->json(['reset' => $count]);
 });
 
 // Advisor test pages — remove after testing
