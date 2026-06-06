@@ -44,7 +44,7 @@ class SecurityHeaders
 
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'nonce-" . $this->getNonce($response) . "'",
+            "script-src 'self' 'unsafe-inline'",
             "style-src 'self' 'unsafe-inline'",       // Vite-compiled CSS uses inline styles
             "img-src 'self' data: https:",             // allow product images from any HTTPS source
             "connect-src 'self'",                      // AJAX only to this app
@@ -75,10 +75,4 @@ class SecurityHeaders
      * a placeholder. In practice, Laravel 13 + Vite sets @vite nonces
      * automatically — this just threads it through to CSP.
      */
-    private function getNonce(Response $response): string
-    {
-        // If you use @vite in Blade, Laravel sets a nonce on the response.
-        // Return it here so CSP allows those inline scripts.
-        return csp_nonce() ?? '';
-    }
 }
