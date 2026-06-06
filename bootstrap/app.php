@@ -28,9 +28,6 @@ use Illuminate\Http\Request;
 |
 */
 
-// Register rate limiters before the app boots
-RateLimitingConfig::register();
-
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
@@ -39,6 +36,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+
+        // Register rate limiters now that the container is available
+        RateLimitingConfig::register();
 
         // Global middleware — runs on every request, in this order
         $middleware->prepend(TrustProxies::class);  // must be first
