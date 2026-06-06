@@ -40,6 +40,7 @@ Route::get('/run-import/{secret}', function (string $secret, FeedImporter $impor
         'products_updated'  => $log->products_updated,
         'duration_seconds'  => $log->duration_seconds,
         'warnings'          => $log->warnings,
+        'error_message'     => $log->error_message,
     ]);
 });
 
