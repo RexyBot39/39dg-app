@@ -41,6 +41,8 @@ Route::get('/run-import/{secret}', function (string $secret, FeedImporter $impor
         'duration_seconds'  => $log->duration_seconds,
         'warnings'          => $log->warnings,
         'error_message'     => $log->error_message,
+        'feed_url'          => config('ai-advisor.feed.urls'),
+        'format'            => config('ai-advisor.feed.format'),
     ]);
 });
 
