@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\ForceHttps;
-use App\Http\Middleware\RateLimitingConfig;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
@@ -17,14 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-
-        // Register rate limiters here — app container is ready at this point
-        RateLimitingConfig::register();
-
         $middleware->prepend(TrustProxies::class);
         $middleware->append(ForceHttps::class);
         $middleware->append(SecurityHeaders::class);
-
         $middleware->trustProxies(at: '*');
         $middleware->encryptCookies();
     })
