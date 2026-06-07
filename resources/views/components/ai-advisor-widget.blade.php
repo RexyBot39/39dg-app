@@ -17,7 +17,7 @@
 @props([
     'pageContext' => '',
     'supportUrl'  => 'https://www.39dollarglasses.com/contact',
-    'apiUrl'      => '/api/ai-advisor/ask',
+    'apiUrl'      => '/advisor/ask',
     'enabled'     => true,
 ])
 

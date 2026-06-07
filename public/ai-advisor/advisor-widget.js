@@ -5,7 +5,7 @@
  * Usage:
  *   <script>
  *     window.advisorConfig = {
- *       apiUrl:      '/api/ai-advisor/ask',
+ *       apiUrl:      '/advisor/ask',
  *       pageContext: 'neurolux',
  *       supportUrl:  'https://www.39dollarglasses.com/contact',
  *     };
@@ -37,7 +37,7 @@
   // ── Widget class ──────────────────────────────────────────────────────────
   class AdvisorWidget {
     constructor(config = {}) {
-      this.apiUrl      = config.apiUrl      || '/api/ai-advisor/ask';
+      this.apiUrl      = config.apiUrl      || '/advisor/ask';
       this.pageContext = config.pageContext  || '';
       this.supportUrl  = config.supportUrl  || 'https://www.39dollarglasses.com/contact';
       this.sessionId   = this._getOrCreateSessionId();
