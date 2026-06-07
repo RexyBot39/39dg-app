@@ -94,14 +94,7 @@ Route::get('/reset-enrichment/{secret}', function (string $secret) {
 // AI Advisor routes — 10 req/min per IP+session (protects OpenAI spend)
 Route::prefix('advisor')->middleware(['throttle:chat'])->group(function () {
 
-    Route::get('/', [\App\Http\Controllers\AdvisorController::class, 'index'])
-        ->withoutMiddleware(['throttle:chat'])
-        ->middleware(['throttle:web']);
-
-    Route::post('/chat', [\App\Http\Controllers\AdvisorController::class, 'chat'])
-        ->name('advisor.chat');
-
-    Route::delete('/session', [\App\Http\Controllers\AdvisorController::class, 'clearSession'])
-        ->name('advisor.session.clear');
+    Route::post('/ask', [\App\Http\Controllers\AiAdvisor\AdvisorController::class, 'ask'])
+        ->name('advisor.ask');
 
 });
