@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecurityHeaders::class);
         $middleware->trustProxies(at: '*');
         $middleware->encryptCookies();
+        $middleware->validateCsrfTokens(except: ['advisor/*']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (
