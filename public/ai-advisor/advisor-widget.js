@@ -1,154 +1,101 @@
 /**
- * 39DollarGlasses Lens & Frame Advisor Widget v2
- * Self-contained, no external dependencies.
- * Zendesk Web Widget (classic) handoff support.
- *
- * Usage:
- *   <script>
- *     window.advisorConfig = {
- *       apiUrl:      '/advisor/ask',
- *       pageContext: 'neurolux',
- *       supportUrl:  'https://www.39dollarglasses.com/contact',
- *     };
- *   </script>
- *   <script src="/ai-advisor/advisor-widget.js" defer></script>
+ * 39DollarGlasses Lens & Frame Advisor Widget v3
+ * Self-contained — no external dependencies.
+ * Zendesk Web Widget (classic) handoff.
  */
-
 (function () {
   'use strict';
 
-  // ── Suggested prompts ────────────────────────────────────────────────────
   const PROMPTS = [
-    { label: 'Help me choose lenses',     question: 'Help me understand my lens options. What are the main types?' },
-    { label: 'Explain Neurolux',          question: 'What are Neurolux lenses?' },
-    { label: 'Explain Lumeo',             question: 'What are Lumeo lenses?' },
-    { label: 'Explain Blue495',           question: 'What is Blue495?' },
-    { label: 'Progressive lenses',        question: 'What are progressive lenses and how do they work?' },
-    { label: 'Help me choose frames',     question: 'How do I choose the right frames for me?' },
-    { label: 'Lightweight frames',        question: 'Show me your most lightweight frame options.' },
-    { label: 'Frames for strong Rx',      question: 'What frames work best for stronger prescriptions?' },
+    { label: 'Help me choose lenses',  question: 'Help me understand my lens options. What are the main types?' },
+    { label: 'Neurolux lenses',        question: 'What are Neurolux lenses?' },
+    { label: 'Lumeo lenses',           question: 'What are Lumeo lenses?' },
+    { label: 'Blue495 coating',        question: 'What is Blue495?' },
+    { label: 'Progressive lenses',     question: 'What are progressive lenses and how do they work?' },
+    { label: 'Help me choose frames',  question: 'How do I choose the right frames for me?' },
+    { label: 'Lightweight frames',     question: 'Show me your most lightweight frame options.' },
+    { label: 'Frames for strong Rx',   question: 'What frames work best for stronger prescriptions?' },
   ];
 
-  // ── SVG icons ─────────────────────────────────────────────────────────────
-  const ICON_GLASSES = `<svg class="advisor-launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M2 15h0M10 15h4M22 15h0"/><path d="M6 11V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/></svg>`;
-  const ICON_CLOSE   = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>`;
-  const ICON_BACK    = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>`;
-  const ICON_SEND    = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/></svg>`;
-  const ICON_CHAT    = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+  const I = {
+    glasses: `<svg class="advisor-launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M2 15h0M10 15h4M22 15h0"/><path d="M6 11V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/></svg>`,
+    close:   `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+    back:    `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>`,
+    send:    `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/></svg>`,
+    chat:    `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  };
 
-  // ── Zendesk Web Widget (classic) integration ──────────────────────────────
-
-  /**
-   * Opens Zendesk Web Widget classic live chat.
-   * If the widget isn't loaded yet, falls back to the support URL.
-   *
-   * To use: ensure the Zendesk Web Widget script is on the page:
-   *   <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=YOUR_KEY" async></script>
-   *
-   * The widget must have the Chat channel enabled in Zendesk settings.
-   */
-  function openZendeskChat(fallbackUrl, prefillMessage) {
+  // ── Zendesk ────────────────────────────────────────────────────────────────
+  function openZendesk(fallback, prefill) {
     if (typeof window.zE !== 'function') {
-      // Zendesk not loaded — fall back to support page
-      window.open(fallbackUrl || 'https://www.39dollarglasses.com/contact', '_blank', 'noopener,noreferrer');
+      window.open(fallback || 'https://www.39dollarglasses.com/contact', '_blank', 'noopener');
       return;
     }
-
     try {
-      // Pre-fill message so the agent has context from the AI conversation
-      if (prefillMessage) {
+      if (prefill) {
         window.zE('webWidget', 'prefill', {
-          name:    { value: '', readOnly: false },
-          email:   { value: '', readOnly: false },
-          phone:   { value: '', readOnly: false },
-          subject: { value: 'Lens & Frame Advisor handoff', readOnly: false },
-          description: { value: prefillMessage, readOnly: false },
+          subject:     { value: 'Advisor handoff', readOnly: false },
+          description: { value: prefill, readOnly: false },
         });
       }
-
-      // Open the widget
       window.zE('webWidget', 'open');
-
-      // Switch to live chat if available
-      window.zE('webWidget', 'chat:send', '');
-
-    } catch (err) {
-      console.warn('[AdvisorWidget] Zendesk open failed:', err);
-      window.open(fallbackUrl || 'https://www.39dollarglasses.com/contact', '_blank', 'noopener,noreferrer');
+    } catch(e) {
+      window.open(fallback || 'https://www.39dollarglasses.com/contact', '_blank', 'noopener');
     }
   }
 
-  /**
-   * Build a handoff message summarising the conversation for the live agent.
-   */
-  function buildHandoffMessage(question, answerType) {
-    const lines = [
-      'Customer was using the AI Lens & Frame Advisor and requested to speak with a human.',
-      '',
-      `Last question: "${question}"`,
-      `Advisor response type: ${answerType || 'unknown'}`,
-      '',
-      'Please assist this customer.',
-    ];
-    return lines.join('\n');
+  function prefillMsg(q, type) {
+    return `Customer transferred from AI Lens & Frame Advisor.\n\nLast question: "${q}"\nResponse type: ${type || 'unknown'}\n\nPlease assist.`;
   }
 
-  // ── Widget class ──────────────────────────────────────────────────────────
+  // ── Widget ─────────────────────────────────────────────────────────────────
   class AdvisorWidget {
-    constructor(config = {}) {
-      this.apiUrl       = config.apiUrl      || '/advisor/ask';
-      this.pageContext  = config.pageContext  || '';
-      this.supportUrl   = config.supportUrl  || 'https://www.39dollarglasses.com/contact';
-      this.sessionId    = this._getOrCreateSessionId();
-      this.isOpen       = false;
-      this._root        = null;
-      this._panel       = null;
-      this._body        = null;
-      this._lastQuestion   = '';
-      this._lastAnswerType = '';
-
-      this._mount();
+    constructor(cfg = {}) {
+      this.api        = cfg.apiUrl     || '/advisor/ask';
+      this.ctx        = cfg.pageContext || '';
+      this.support    = cfg.supportUrl || 'https://www.39dollarglasses.com/contact';
+      this.sid        = this._sid();
+      this.open       = false;
+      this._panel     = null;
+      this._body      = null;
+      this._lastQ     = '';
+      this._lastType  = '';
+      this._build();
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    toggle() { this.open ? this._close() : this._open(); }
 
-    open() {
-      this.isOpen = true;
+    _open() {
+      this.open = true;
       this._panel.classList.add('is-open');
       this._panel.removeAttribute('aria-hidden');
       this._root.querySelector('.advisor-launcher').setAttribute('aria-expanded', 'true');
-      this._track('advisor_opened', { page_context: this.pageContext });
+      this._track('advisor_opened');
     }
 
-    close() {
-      this.isOpen = false;
+    _close() {
+      this.open = false;
       this._panel.classList.remove('is-open');
       this._panel.setAttribute('aria-hidden', 'true');
       this._root.querySelector('.advisor-launcher').setAttribute('aria-expanded', 'false');
     }
 
-    // ── Mounting ──────────────────────────────────────────────────────────────
+    _build() {
+      const root = document.createElement('div');
+      root.id = 'advisor-widget';
+      root.setAttribute('role', 'complementary');
+      root.setAttribute('aria-label', 'Lens & Frame Advisor');
+      this._root = root;
+      document.body.appendChild(root);
 
-    _mount() {
-      this._root = document.createElement('div');
-      this._root.id = 'advisor-widget';
-      this._root.setAttribute('role', 'complementary');
-      this._root.setAttribute('aria-label', 'Lens & Frame Advisor');
-      document.body.appendChild(this._root);
-
-      this._renderShell();
-      this._showInitialState();
-    }
-
-    _renderShell() {
       // Launcher
-      const launcher = document.createElement('button');
-      launcher.className = 'advisor-launcher';
-      launcher.setAttribute('aria-expanded', 'false');
-      launcher.setAttribute('aria-controls', 'advisor-panel');
-      launcher.innerHTML = `${ICON_GLASSES}<span>Need help choosing?</span><span class="advisor-launcher-dot" aria-hidden="true"></span>`;
-      launcher.addEventListener('click', () => this.isOpen ? this.close() : this.open());
-      this._root.appendChild(launcher);
+      const btn = document.createElement('button');
+      btn.className = 'advisor-launcher';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-controls', 'advisor-panel');
+      btn.innerHTML = `${I.glasses}<span>Need help choosing?</span><span class="advisor-launcher-dot" aria-hidden="true"></span>`;
+      btn.addEventListener('click', () => this.toggle());
+      root.appendChild(btn);
 
       // Panel
       const panel = document.createElement('div');
@@ -160,29 +107,27 @@
       this._panel = panel;
 
       // Header
-      const header = document.createElement('div');
-      header.className = 'advisor-header';
-      header.innerHTML = `
+      const hdr = document.createElement('div');
+      hdr.className = 'advisor-header';
+      hdr.innerHTML = `
         <div class="advisor-header-left">
           <div class="advisor-header-avatar" aria-hidden="true">🕶️</div>
           <div>
-            <div class="advisor-header-title">Lens &amp; Frame Advisor</div>
-            <div class="advisor-header-status">
-              <span class="advisor-header-status-dot" aria-hidden="true"></span>
+            <div class="advisor-header-name">Lens &amp; Frame Advisor</div>
+            <div class="advisor-header-sub">
+              <span class="advisor-header-online" aria-hidden="true"></span>
               <span>Online · 39DollarGlasses</span>
             </div>
           </div>
         </div>
-        <div class="advisor-header-actions"></div>
       `;
-
-      const closeBtn = document.createElement('button');
-      closeBtn.className = 'advisor-icon-btn';
-      closeBtn.setAttribute('aria-label', 'Close advisor');
-      closeBtn.innerHTML = ICON_CLOSE;
-      closeBtn.addEventListener('click', () => this.close());
-      header.querySelector('.advisor-header-actions').appendChild(closeBtn);
-      panel.appendChild(header);
+      const xBtn = document.createElement('button');
+      xBtn.className = 'advisor-header-close';
+      xBtn.setAttribute('aria-label', 'Close');
+      xBtn.innerHTML = I.close;
+      xBtn.addEventListener('click', () => this._close());
+      hdr.appendChild(xBtn);
+      panel.appendChild(hdr);
 
       // Body
       const body = document.createElement('div');
@@ -191,458 +136,320 @@
       panel.appendChild(body);
 
       // Footer
-      const footer = document.createElement('div');
-      footer.className = 'advisor-footer';
+      const ftr = document.createElement('div');
+      ftr.className = 'advisor-footer';
 
-      const footerLeft = document.createElement('div');
-      footerLeft.className = 'advisor-footer-left';
-      const supportLink = document.createElement('a');
-      supportLink.href = this.supportUrl;
-      supportLink.textContent = 'Support';
-      supportLink.target = '_blank';
-      supportLink.rel = 'noopener noreferrer';
-      supportLink.addEventListener('click', () => this._track('advisor_support_footer_clicked'));
+      const fl = document.createElement('div');
+      fl.className = 'advisor-footer-left';
+      const sl = document.createElement('a');
+      sl.href = this.support; sl.textContent = 'Support';
+      sl.target = '_blank'; sl.rel = 'noopener noreferrer';
       const sep = document.createElement('span');
-      sep.className = 'advisor-footer-sep';
-      sep.textContent = '·';
+      sep.className = 'advisor-footer-sep'; sep.textContent = '·';
       const note = document.createElement('span');
       note.textContent = 'Product info only';
-      footerLeft.appendChild(supportLink);
-      footerLeft.appendChild(sep);
-      footerLeft.appendChild(note);
+      fl.append(sl, sep, note);
 
-      // Live chat button in footer
-      const chatBtn = document.createElement('button');
-      chatBtn.className = 'advisor-footer-chat-btn';
-      chatBtn.innerHTML = `${ICON_CHAT} Live chat`;
-      chatBtn.addEventListener('click', () => this._handoffToZendesk());
-      footer.appendChild(footerLeft);
-      footer.appendChild(chatBtn);
-      panel.appendChild(footer);
+      const livBtn = document.createElement('button');
+      livBtn.className = 'advisor-footer-live';
+      livBtn.innerHTML = `${I.chat} Live chat`;
+      livBtn.addEventListener('click', () => this._handoff());
+      ftr.append(fl, livBtn);
+      panel.appendChild(ftr);
+      root.appendChild(panel);
 
-      this._root.appendChild(panel);
+      this._home();
     }
 
-    // ── States ────────────────────────────────────────────────────────────────
+    // ── Screens ──────────────────────────────────────────────────────────────
 
-    _showInitialState() {
-      this._clearBody();
+    _home() {
+      this._clear();
 
-      const welcome = document.createElement('p');
-      welcome.className = 'advisor-welcome-text';
+      // Welcome card
+      const welcome = document.createElement('div');
+      welcome.className = 'advisor-welcome';
       welcome.textContent = 'I can explain lens and frame options and suggest specific products from our catalog. Choose a topic or ask your own question.';
       this._body.appendChild(welcome);
 
-      // Quick prompts
-      const topicsLabel = document.createElement('div');
-      topicsLabel.className = 'advisor-section-label';
-      topicsLabel.textContent = 'Quick topics';
-      this._body.appendChild(topicsLabel);
+      // Prompts
+      const lbl = document.createElement('div');
+      lbl.className = 'advisor-label'; lbl.textContent = 'Quick topics';
+      this._body.appendChild(lbl);
 
-      const promptsWrap = document.createElement('div');
-      promptsWrap.className = 'advisor-prompts';
+      const chips = document.createElement('div');
+      chips.className = 'advisor-prompts';
       PROMPTS.forEach(({ label, question }) => {
-        const btn = document.createElement('button');
-        btn.className = 'advisor-prompt-btn';
-        btn.textContent = label;
-        btn.addEventListener('click', () => this._submit(question));
-        promptsWrap.appendChild(btn);
+        const c = document.createElement('button');
+        c.className = 'advisor-chip'; c.textContent = label;
+        c.addEventListener('click', () => this._ask(question));
+        chips.appendChild(c);
       });
-      this._body.appendChild(promptsWrap);
+      this._body.appendChild(chips);
 
-      const divider = document.createElement('div');
-      divider.className = 'advisor-divider';
-      divider.textContent = 'or ask your own question';
-      this._body.appendChild(divider);
+      // Divider
+      const div = document.createElement('div');
+      div.className = 'advisor-divider'; div.textContent = 'or ask your own question';
+      this._body.appendChild(div);
 
       // Input
-      const inputRow = document.createElement('div');
-      inputRow.className = 'advisor-input-row';
+      const wrap = document.createElement('div');
+      wrap.className = 'advisor-input-wrap';
 
-      const textareaWrap = document.createElement('div');
-      textareaWrap.className = 'advisor-textarea-wrap';
+      const ta = document.createElement('textarea');
+      ta.className = 'advisor-textarea';
+      ta.placeholder = 'e.g. What coating is best for computer use?';
+      ta.rows = 3; ta.maxLength = 500;
+      ta.setAttribute('aria-label', 'Your question');
 
-      const textarea = document.createElement('textarea');
-      textarea.className = 'advisor-textarea';
-      textarea.placeholder = 'e.g. What coating is best for computer use?';
-      textarea.rows = 2;
-      textarea.maxLength = 500;
-      textarea.setAttribute('aria-label', 'Your question');
+      const bar = document.createElement('div');
+      bar.className = 'advisor-input-bar';
 
-      const charCount = document.createElement('span');
-      charCount.className = 'advisor-char-count';
-      charCount.textContent = '';
+      const cc = document.createElement('span');
+      cc.className = 'advisor-char';
 
-      textarea.addEventListener('input', () => {
-        const len = textarea.value.length;
-        if (len > 400) {
-          charCount.textContent = `${len}/500`;
-          charCount.classList.toggle('near-limit', len > 460);
-        } else {
-          charCount.textContent = '';
-        }
+      ta.addEventListener('input', () => {
+        const n = ta.value.length;
+        cc.textContent = n > 400 ? `${n}/500` : '';
+        cc.classList.toggle('warn', n > 460);
       });
-
-      textarea.addEventListener('keydown', (e) => {
+      ta.addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          if (textarea.value.trim()) this._submit(textarea.value.trim());
+          if (ta.value.trim()) this._ask(ta.value.trim());
         }
       });
 
-      textareaWrap.appendChild(textarea);
-      textareaWrap.appendChild(charCount);
-      inputRow.appendChild(textareaWrap);
+      const sendBtn = document.createElement('button');
+      sendBtn.className = 'advisor-send';
+      sendBtn.innerHTML = `${I.send} Ask`;
+      sendBtn.addEventListener('click', () => { if (ta.value.trim()) this._ask(ta.value.trim()); });
 
-      const inputFooter = document.createElement('div');
-      inputFooter.className = 'advisor-input-footer';
-
-      const hint = document.createElement('span');
-      hint.className = 'advisor-input-hint';
-      hint.textContent = 'Press Enter to ask';
-
-      const submitBtn = document.createElement('button');
-      submitBtn.className = 'advisor-submit-btn';
-      submitBtn.innerHTML = `${ICON_SEND} Ask`;
-      submitBtn.addEventListener('click', () => {
-        if (textarea.value.trim()) this._submit(textarea.value.trim());
-      });
-
-      inputFooter.appendChild(hint);
-      inputFooter.appendChild(submitBtn);
-      inputRow.appendChild(inputFooter);
-      this._body.appendChild(inputRow);
-    }
-
-    _showLoadingState() {
-      this._clearBody();
-
-      const wrap = document.createElement('div');
-      wrap.className = 'advisor-loading';
-      wrap.setAttribute('aria-live', 'polite');
-      wrap.setAttribute('aria-busy', 'true');
-
-      const dots = document.createElement('div');
-      dots.className = 'advisor-loading-dots';
-      dots.setAttribute('role', 'status');
-      dots.setAttribute('aria-label', 'Looking that up');
-      [1,2,3].forEach(() => {
-        const dot = document.createElement('span');
-        dots.appendChild(dot);
-      });
-
-      const text = document.createElement('p');
-      text.textContent = 'Looking that up…';
-
-      wrap.appendChild(dots);
-      wrap.appendChild(text);
+      bar.append(cc, sendBtn);
+      wrap.append(ta, bar);
       this._body.appendChild(wrap);
     }
 
-    _showResponseState(data, question) {
-      this._clearBody();
+    _loading() {
+      this._clear();
+      const w = document.createElement('div');
+      w.className = 'advisor-loading';
+      w.setAttribute('aria-live', 'polite');
+      const dots = document.createElement('div');
+      dots.className = 'advisor-dots';
+      dots.setAttribute('role', 'status');
+      dots.setAttribute('aria-label', 'Loading');
+      [0,1,2].forEach(() => dots.appendChild(document.createElement('span')));
+      const t = document.createElement('p'); t.textContent = 'Looking that up…';
+      w.append(dots, t);
+      this._body.appendChild(w);
+    }
 
-      // Store for handoff context
-      this._lastQuestion   = question;
-      this._lastAnswerType = data.answer_type;
+    _result(data, q) {
+      this._clear();
+      this._lastQ = q; this._lastType = data.answer_type;
 
-      // Back button
-      const backBtn = document.createElement('button');
-      backBtn.className = 'advisor-back-btn';
-      backBtn.innerHTML = `${ICON_BACK} Ask another question`;
-      backBtn.addEventListener('click', () => this._showInitialState());
-      this._body.appendChild(backBtn);
+      const back = document.createElement('button');
+      back.className = 'advisor-back';
+      back.innerHTML = `${I.back} Ask another question`;
+      back.addEventListener('click', () => this._home());
+      this._body.appendChild(back);
 
-      // Main answer
       if (data.short_answer) {
-        const answer = document.createElement('p');
-        answer.className = 'advisor-answer';
-        answer.textContent = data.short_answer;
-        this._body.appendChild(answer);
+        const a = document.createElement('p');
+        a.className = 'advisor-answer'; a.textContent = data.short_answer;
+        this._body.appendChild(a);
       }
 
-      // Educational bullets
-      if (data.educational_points && data.educational_points.length > 0) {
-        const list = document.createElement('ul');
-        list.className = 'advisor-points';
-        data.educational_points.forEach((point) => {
-          const li = document.createElement('li');
-          li.textContent = point;
-          list.appendChild(li);
+      if (data.educational_points?.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'advisor-bullets';
+        data.educational_points.forEach(pt => {
+          const li = document.createElement('li'); li.textContent = pt;
+          ul.appendChild(li);
+        });
+        this._body.appendChild(ul);
+      }
+
+      if (data.recommended_products?.length) {
+        const lbl = document.createElement('div');
+        lbl.className = 'advisor-products-label'; lbl.textContent = 'Suggested frames';
+        this._body.appendChild(lbl);
+        const list = document.createElement('div');
+        list.className = 'advisor-products';
+        data.recommended_products.forEach(p => {
+          list.appendChild(this._card(p));
+          this._track('advisor_product_shown', { product_id: p.product_id });
         });
         this._body.appendChild(list);
       }
 
-      // Product cards
-      if (data.recommended_products && data.recommended_products.length > 0) {
-        const heading = document.createElement('div');
-        heading.className = 'advisor-products-heading';
-        heading.textContent = 'Suggested frames';
-        this._body.appendChild(heading);
-
-        const productList = document.createElement('div');
-        productList.className = 'advisor-products-list';
-        data.recommended_products.forEach((product) => {
-          const card = this._buildProductCard(product);
-          productList.appendChild(card);
-          this._track('advisor_product_shown', {
-            product_id:    product.product_id,
-            product_title: product.title,
-            page_context:  this.pageContext,
-          });
-        });
-        this._body.appendChild(productList);
+      if (data.support_handoff?.needed) {
+        this._body.appendChild(this._handoffCard(data.support_handoff.message));
       }
 
-      // Support handoff (out-of-scope questions)
-      if (data.support_handoff && data.support_handoff.needed) {
-        this._body.appendChild(this._buildZendeskHandoff(data.support_handoff.message));
-        this._track('advisor_handoff_shown', { reason: data.support_handoff.reason });
-      }
-
-      // Disclaimer
       if (data.disclaimer) {
-        const disclaimer = document.createElement('p');
-        disclaimer.className = 'advisor-disclaimer';
-        disclaimer.textContent = data.disclaimer;
-        this._body.appendChild(disclaimer);
+        const d = document.createElement('p');
+        d.className = 'advisor-disclaimer'; d.textContent = data.disclaimer;
+        this._body.appendChild(d);
       }
 
-      this._track('advisor_response_received', {
-        answer_type:  data.answer_type,
-        has_products: (data.recommended_products || []).length > 0,
-        has_handoff:  !!(data.support_handoff && data.support_handoff.needed),
-        page_context: this.pageContext,
-      });
+      this._track('advisor_response_received', { answer_type: data.answer_type });
     }
 
-    _showErrorState() {
-      this._clearBody();
-
-      const backBtn = document.createElement('button');
-      backBtn.className = 'advisor-back-btn';
-      backBtn.innerHTML = `${ICON_BACK} Try again`;
-      backBtn.addEventListener('click', () => this._showInitialState());
-      this._body.appendChild(backBtn);
-
+    _error() {
+      this._clear();
+      const back = document.createElement('button');
+      back.className = 'advisor-back';
+      back.innerHTML = `${I.back} Try again`;
+      back.addEventListener('click', () => this._home());
+      this._body.appendChild(back);
       const err = document.createElement('div');
       err.className = 'advisor-error';
       err.setAttribute('role', 'alert');
-      err.textContent = 'Something went wrong. Please try again or use the live chat button below.';
+      err.textContent = 'Something went wrong. Please try again or start a live chat.';
       this._body.appendChild(err);
-
-      this._body.appendChild(this._buildZendeskHandoff(null));
+      this._body.appendChild(this._handoffCard(null));
     }
 
-    // ── Building blocks ───────────────────────────────────────────────────────
+    // ── Components ────────────────────────────────────────────────────────────
 
-    _buildProductCard(product) {
-      const card = document.createElement('a');
-      card.className = 'advisor-product-card';
-      card.href = product.public_url;
-      card.target = '_blank';
-      card.rel = 'noopener noreferrer';
-      card.setAttribute('aria-label', `View ${product.title} — ${product.price}`);
-      card.addEventListener('click', () => {
-        this._track('advisor_product_clicked', {
-          product_id:    product.product_id,
-          product_title: product.title,
-          page_context:  this.pageContext,
-        });
-      });
+    _card(p) {
+      const a = document.createElement('a');
+      a.className = 'advisor-card';
+      a.href = p.public_url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.setAttribute('aria-label', `View ${p.title} — ${p.price}`);
+      a.addEventListener('click', () => this._track('advisor_product_clicked', { product_id: p.product_id }));
 
       const imgWrap = document.createElement('div');
-      imgWrap.className = 'advisor-product-img-wrap';
-
-      if (product.image_url) {
+      imgWrap.className = 'advisor-card-img';
+      if (p.image_url) {
         const img = document.createElement('img');
-        img.className = 'advisor-product-img';
-        img.alt = product.title;
-        img.loading = 'lazy';
-        img.src = product.image_url;
-        img.onerror = function () {
-          this.parentNode.innerHTML = `<span class="advisor-product-img-placeholder" aria-hidden="true">🕶️</span>`;
-        };
+        img.alt = p.title; img.loading = 'lazy'; img.src = p.image_url;
+        img.onerror = function() { this.parentNode.innerHTML = `<span class="advisor-card-img-ph" aria-hidden="true">🕶️</span>`; };
         imgWrap.appendChild(img);
       } else {
-        imgWrap.innerHTML = `<span class="advisor-product-img-placeholder" aria-hidden="true">🕶️</span>`;
+        imgWrap.innerHTML = `<span class="advisor-card-img-ph" aria-hidden="true">🕶️</span>`;
       }
-      card.appendChild(imgWrap);
+      a.appendChild(imgWrap);
 
-      const info = document.createElement('div');
-      info.className = 'advisor-product-info';
+      const body = document.createElement('div');
+      body.className = 'advisor-card-body';
 
-      const title = document.createElement('div');
-      title.className = 'advisor-product-title';
-      title.textContent = product.title;
-      info.appendChild(title);
+      const name = document.createElement('div');
+      name.className = 'advisor-card-name'; name.textContent = p.title;
+      body.appendChild(name);
 
-      if (product.reason) {
-        const reason = document.createElement('div');
-        reason.className = 'advisor-product-reason';
-        reason.textContent = product.reason;
-        info.appendChild(reason);
+      if (p.reason) {
+        const why = document.createElement('div');
+        why.className = 'advisor-card-why'; why.textContent = p.reason;
+        body.appendChild(why);
       }
 
-      const footer = document.createElement('div');
-      footer.className = 'advisor-product-footer';
-
+      const foot = document.createElement('div');
+      foot.className = 'advisor-card-foot';
       const price = document.createElement('span');
-      price.className = 'advisor-product-price';
-      price.textContent = product.price;
-      footer.appendChild(price);
-
+      price.className = 'advisor-card-price'; price.textContent = p.price;
       const cta = document.createElement('span');
-      cta.className = 'advisor-product-cta';
+      cta.className = 'advisor-card-cta'; cta.textContent = 'View →';
       cta.setAttribute('aria-hidden', 'true');
-      cta.textContent = 'View →';
-      footer.appendChild(cta);
-
-      info.appendChild(footer);
-      card.appendChild(info);
-
-      return card;
+      foot.append(price, cta);
+      body.appendChild(foot);
+      a.appendChild(body);
+      return a;
     }
 
-    /**
-     * Zendesk live chat handoff card — shown on support_handoff responses
-     * and error states.
-     */
-    _buildZendeskHandoff(message) {
+    _handoffCard(msg) {
       const wrap = document.createElement('div');
-      wrap.className = 'advisor-zendesk-handoff';
+      wrap.className = 'advisor-handoff';
 
-      const header = document.createElement('div');
-      header.className = 'advisor-zendesk-handoff-header';
+      const top = document.createElement('div');
+      top.className = 'advisor-handoff-top';
 
-      const icon = document.createElement('div');
-      icon.className = 'advisor-zendesk-icon';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = '💬';
-      header.appendChild(icon);
+      const iconWrap = document.createElement('div');
+      iconWrap.className = 'advisor-handoff-icon-wrap';
+      iconWrap.setAttribute('aria-hidden', 'true');
+      iconWrap.textContent = '💬';
 
-      const textBlock = document.createElement('div');
-      const titleEl = document.createElement('div');
-      titleEl.className = 'advisor-zendesk-handoff-title';
-      titleEl.textContent = 'Need account or order help?';
-      const descEl = document.createElement('div');
-      descEl.className = 'advisor-zendesk-handoff-desc';
-      descEl.textContent = message || 'Our support team can help with orders, prescriptions, refunds, remakes, and account questions.';
-      textBlock.appendChild(titleEl);
-      textBlock.appendChild(descEl);
-      header.appendChild(textBlock);
-      wrap.appendChild(header);
+      const txt = document.createElement('div');
+      const title = document.createElement('div');
+      title.className = 'advisor-handoff-title';
+      title.textContent = 'Need account or order help?';
+      const desc = document.createElement('div');
+      desc.className = 'advisor-handoff-desc';
+      desc.textContent = msg || 'Our team handles orders, prescriptions, refunds, and account questions.';
+      txt.append(title, desc);
+      top.append(iconWrap, txt);
+      wrap.appendChild(top);
 
       const btn = document.createElement('button');
-      btn.className = 'advisor-zendesk-btn';
-      btn.innerHTML = `${ICON_CHAT} Start live chat`;
-      btn.addEventListener('click', () => this._handoffToZendesk());
+      btn.className = 'advisor-handoff-btn';
+      btn.innerHTML = `${I.chat} Start live chat`;
+      btn.addEventListener('click', () => this._handoff());
       wrap.appendChild(btn);
-
       return wrap;
     }
 
-    // ── Zendesk handoff ───────────────────────────────────────────────────────
+    // ── Zendesk ───────────────────────────────────────────────────────────────
 
-    _handoffToZendesk() {
-      const prefill = this._lastQuestion
-        ? buildHandoffMessage(this._lastQuestion, this._lastAnswerType)
-        : null;
-
-      this._track('advisor_zendesk_handoff', {
-        page_context:  this.pageContext,
-        last_question: this._lastQuestion,
-        answer_type:   this._lastAnswerType,
-      });
-
-      openZendeskChat(this.supportUrl, prefill);
+    _handoff() {
+      this._track('advisor_zendesk_handoff');
+      openZendesk(this.support, this._lastQ ? prefillMsg(this._lastQ, this._lastType) : null);
     }
 
-    // ── API call ──────────────────────────────────────────────────────────────
+    // ── API ───────────────────────────────────────────────────────────────────
 
-    async _submit(question) {
-      if (!question || !question.trim()) return;
-
-      this._track('advisor_question_asked', {
-        page_context:    this.pageContext,
-        question_length: question.length,
-      });
-
-      this._showLoadingState();
-
+    async _ask(q) {
+      if (!q?.trim()) return;
+      this._track('advisor_question_asked', { question_length: q.length });
+      this._loading();
       try {
-        const response = await fetch(this.apiUrl, {
-          method:  'POST',
+        const res = await fetch(this.api, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body:    JSON.stringify({
-            question:     question.trim(),
-            page_context: this.pageContext,
-            session_id:   this.sessionId,
-            site:         '39dollarglasses',
-          }),
+          body: JSON.stringify({ question: q.trim(), page_context: this.ctx, session_id: this.sid, site: '39dollarglasses' }),
         });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-        this._showResponseState(data, question);
-
-      } catch (err) {
-        console.error('[AdvisorWidget] API error:', err);
-        this._showErrorState();
-        this._track('advisor_error', { error: err.message });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        this._result(await res.json(), q);
+      } catch(e) {
+        console.error('[Advisor]', e);
+        this._error();
+        this._track('advisor_error', { error: e.message });
       }
     }
 
-    // ── Utilities ─────────────────────────────────────────────────────────────
+    // ── Utils ─────────────────────────────────────────────────────────────────
 
-    _clearBody() {
-      while (this._body.firstChild) {
-        this._body.removeChild(this._body.firstChild);
-      }
-    }
+    _clear() { this._body.replaceChildren(); }
 
-    _getOrCreateSessionId() {
+    _sid() {
       try {
-        let id = sessionStorage.getItem('advisor_session_id');
+        let id = sessionStorage.getItem('adv_sid');
         if (!id) {
           id = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-            (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
-          );
-          sessionStorage.setItem('advisor_session_id', id);
+            (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16));
+          sessionStorage.setItem('adv_sid', id);
         }
         return id;
-      } catch {
-        return null;
-      }
+      } catch { return null; }
     }
 
-    _track(event, data = {}) {
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', event, { event_category: 'advisor_widget', ...data });
-      }
-      if (typeof window.posthog !== 'undefined' && typeof window.posthog.capture === 'function') {
-        window.posthog.capture(event, { source: 'advisor_widget', ...data });
-      }
-      if (typeof window.advisorAnalytics === 'function') {
-        window.advisorAnalytics(event, data);
-      }
+    _track(ev, d = {}) {
+      if (typeof window.gtag === 'function') window.gtag('event', ev, { event_category: 'advisor_widget', ...d });
+      if (window.posthog?.capture) window.posthog.capture(ev, { source: 'advisor_widget', ...d });
+      if (typeof window.advisorAnalytics === 'function') window.advisorAnalytics(ev, d);
     }
   }
 
-  // ── Auto-initialize ───────────────────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────────────────
   function init() {
     if (document.getElementById('advisor-widget')) return;
-    const config = window.advisorConfig || {};
-    window._advisorWidget = new AdvisorWidget(config);
+    window._advisorWidget = new AdvisorWidget(window.advisorConfig || {});
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  document.readyState === 'loading'
+    ? document.addEventListener('DOMContentLoaded', init)
+    : init();
 
   window.AdvisorWidget = AdvisorWidget;
-
 })();
