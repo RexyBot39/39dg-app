@@ -37,7 +37,7 @@
 }
 
 #advisor-widget *, #advisor-widget *::before, #advisor-widget *::after {
-  box-sizing: border-box; margin: 0; padding: 0;
+  box-sizing: border-box; margin: 0;
 }
 
 #advisor-widget {
@@ -181,7 +181,7 @@
 .advisor-close:focus-visible { outline: 2px solid var(--adv-orange); outline-offset: 2px; }
 
 /* ── Body ── */
-.advisor-body {
+#advisor-widget .advisor-body {
   flex: 1;
   overflow-y: auto;
   padding: 24px 22px;
