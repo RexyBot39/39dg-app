@@ -142,14 +142,14 @@
       // Footer
       const ftr = document.createElement('div');
       ftr.className = 'advisor-footer';
+      const cta = document.createElement('button');
+      cta.className = 'advisor-footer-cta';
+      cta.innerHTML = `${I.chat} Speak with customer service`;
+      cta.addEventListener('click', () => this._handoff());
       const note = document.createElement('span');
       note.className = 'advisor-footer-note';
       note.textContent = 'General product info · not medical advice';
-      const live = document.createElement('button');
-      live.className = 'advisor-footer-live';
-      live.innerHTML = `${I.chat} Live chat`;
-      live.addEventListener('click', () => this._handoff());
-      ftr.append(note, live);
+      ftr.append(cta, note);
       panel.appendChild(ftr);
       root.appendChild(panel);
 
