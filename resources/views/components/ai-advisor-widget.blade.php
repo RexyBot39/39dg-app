@@ -26,7 +26,7 @@
 
     {{-- Output CSS inline so it loads regardless of @stack('styles') placement --}}
     @once
-        <link rel="stylesheet" href="{{ asset('ai-advisor/advisor-widget.css') }}?v={{ config('app.version', '1') }}">
+        <link rel="stylesheet" href="{{ asset('ai-advisor/advisor-widget.css') }}?v={{ filemtime(public_path('ai-advisor/advisor-widget.css')) }}">
     @endonce
 
     <script>
@@ -36,6 +36,6 @@
             supportUrl:  @js($supportUrl),
         };
     </script>
-    <script src="{{ asset('ai-advisor/advisor-widget.js') }}?v={{ config('app.version', '1') }}" defer></script>
+    <script src="{{ asset('ai-advisor/advisor-widget.js') }}?v={{ filemtime(public_path('ai-advisor/advisor-widget.js')) }}" defer></script>
 
 @endif
