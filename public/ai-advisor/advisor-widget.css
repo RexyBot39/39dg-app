@@ -230,18 +230,17 @@
 .advisor-topic {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   background: var(--adv-paper);
   border: 1px solid var(--adv-line);
   border-radius: var(--adv-r);
-  padding: 10px 40px;
+  padding: 11px 14px;
   font-size: 13.5px;
   font-weight: 500;
   color: var(--adv-ink-2);
   cursor: pointer;
-  text-align: center;
+  text-align: left;
   letter-spacing: -.01em;
   position: relative;
   transition: border-color .16s var(--adv-ease),
@@ -256,7 +255,7 @@
 .advisor-topic:active { transform: none; }
 .advisor-topic:focus-visible { outline: 2px solid var(--adv-orange); outline-offset: 2px; }
 .advisor-topic-ico {
-  width: 20px; height: 20px;
+  width: 22px; height: 22px;
   border-radius: 6px;
   background: var(--adv-orange-soft);
   color: var(--adv-orange);
@@ -265,11 +264,9 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.advisor-topic-ico svg { width: 12px; height: 12px; }
-.advisor-topic span { flex: 0 1 auto; }
+.advisor-topic-ico svg { width: 13px; height: 13px; }
+.advisor-topic span { flex: 1; }
 .advisor-topic-arrow {
-  position: absolute;
-  right: 14px;
   color: var(--adv-gray-3);
   flex-shrink: 0;
   transition: transform .16s var(--adv-ease), color .16s;
