@@ -1,0 +1,69 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://www.39dollarglasses.com/#organization",
+    "name": "39DollarGlasses",
+    "url": "https://www.39dollarglasses.com/",
+    "logo": "https://www.39dollarglasses.com/REPLACE-WITH-LOGO-PATH.png",
+    "sameAs": [
+      "https://www.facebook.com/39DollarGlasses",
+      "https://www.instagram.com/39dollarglasses"
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "@id": "https://www.39dollarglasses.com/lumeo/amazon-echo-frames-prescription-lenses#product",
+    "name": "Lumeo Prescription Lenses for Supported Amazon Echo Frames",
+    "description": "Prescription lens options for supported Amazon Echo Frames, including single vision, progressive, blue-light filtering, and anti-reflective lens options where compatible.",
+    "brand": {
+      "@type": "Brand",
+      "name": "Lumeo"
+    },
+    "manufacturer": {
+      "@id": "https://www.39dollarglasses.com/#organization"
+    },
+    "category": "Prescription Eyeglass Lenses",
+    "image": [
+      "https://www.39dollarglasses.com/REPLACE-WITH-ECHO-FRAMES-LUMEO-IMAGE.jpg"
+    ],
+    "url": "https://www.39dollarglasses.com/lumeo/amazon-echo-frames-prescription-lenses",
+    "offers": {
+      "@type": "Offer",
+      "url": "https://www.39dollarglasses.com/lumeo/amazon-echo-frames-prescription-lenses",
+      "priceCurrency": "USD",
+      "price": "REPLACE_WITH_STARTING_PRICE",
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@id": "https://www.39dollarglasses.com/#organization"
+      }
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "@id": "https://www.39dollarglasses.com/lumeo/amazon-echo-frames-prescription-lenses#breadcrumb",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.39dollarglasses.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Lumeo Smart Lenses",
+        "item": "https://www.39dollarglasses.com/lumeo"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Prescription Lenses for Amazon Echo Frames",
+        "item": "https://www.39dollarglasses.com/lumeo/amazon-echo-frames-prescription-lenses"
+      }
+    ]
+  }
+]
