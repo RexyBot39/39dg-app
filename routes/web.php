@@ -23,6 +23,7 @@ Route::middleware(['throttle:web'])->group(function () {
     Route::get('/test/progressives', fn () => view('test.advisor', ['page' => 'progressives', 'title' => 'Progressive Lenses']));
     Route::get('/test/frames',       fn () => view('test.advisor', ['page' => 'frames',       'title' => 'Eyeglass Frames']));
     Route::get('/test/lenses',       fn () => view('test.advisor', ['page' => 'lenses',       'title' => 'Lens Options']));
+    Route::get('/test/internal',     fn () => view('test.advisor-internal'));
 
 });
 
