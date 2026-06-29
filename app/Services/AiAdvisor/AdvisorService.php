@@ -257,6 +257,49 @@ PROMPT;
         private readonly AdvisorFunctionHandler $functionHandler,
     ) {}
 
+    private const BRAND_NAMES = [
+        '39dg'           => '39DollarGlasses',
+        'ocusafe'        => 'OcuSafe',
+        'ocusleep'       => 'OcuSleep',
+        'onlinecontacts' => 'OnlineContacts',
+    ];
+
+    private const BRAND_SITES = [
+        'ocusafe'        => 'ocusafe.com',
+        'onlinecontacts' => 'onlinecontacts.com',
+        'ocusleep'       => 'ocusleep.com',
+    ];
+
+    private function brandDirective(string $brand): string
+    {
+        if ($brand === '39dg') {
+            return '';
+        }
+        $name = self::BRAND_NAMES[$brand] ?? '39DollarGlasses';
+        $site = self::BRAND_SITES[$brand] ?? null;
+        $siteLine = $site ? " Direct product questions to {$site} or our support team." : '';
+        return "\n\nIMPORTANT BRAND CONTEXT: You are the {$name} support assistant, not 39DollarGlasses. "
+            . "You handle policy and support questions for {$name} only, grounded in past support tickets. "
+            . "You do NOT have a product catalog and must NOT recommend specific products, lenses, or frames, "
+            . "and must NOT reference 39DollarGlasses products or pricing. If asked for product recommendations,"
+            . " explain you can help with support and policy questions and point them to the {$name} website"
+            . "{$siteLine} Always identify as {$name}.";
+    }
+
+    private function toolsForBrand(): array
+    {
+        $brand = $this->functionHandler->brand ?? '39dg';
+        if ($brand === '39dg') {
+            return self::TOOL_DEFINITIONS;
+        }
+        // Support-only brands: keep ticket search + support handoff, drop product/knowledge tools.
+        $allowed = ['search_support_tickets', 'get_support_handoff'];
+        return array_values(array_filter(self::TOOL_DEFINITIONS, function ($tool) use ($allowed) {
+            $name = $tool['function']['name'] ?? '';
+            return in_array($name, $allowed, true);
+        }));
+    }
+
     /**
      * @return array The structured advisor response
      */
@@ -271,8 +314,11 @@ PROMPT;
 
         $userMessage = $this->buildUserMessage($question, $pageContext, $selectedFilters);
 
+        $brand = $this->functionHandler->brand ?? '39dg';
+        $systemPrompt = self::SYSTEM_PROMPT . $this->brandDirective($brand);
+
         $messages = [
-            ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
+            ['role' => 'system', 'content' => $systemPrompt],
             ['role' => 'user',   'content' => $userMessage],
         ];
 
@@ -346,7 +392,7 @@ PROMPT;
             ->post('https://api.openai.com/v1/chat/completions', [
                 'model'           => $model,
                 'messages'        => $messages,
-                'tools'           => self::TOOL_DEFINITIONS,
+                'tools'           => $this->toolsForBrand(),
                 'tool_choice'     => 'auto',
                 'response_format' => self::RESPONSE_SCHEMA,
                 'max_tokens'      => self::MAX_TOKENS,

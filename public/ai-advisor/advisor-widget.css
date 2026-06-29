@@ -692,3 +692,8 @@
   color: var(--adv-orange-dk);
   font-weight: 600;
 }
+
+/* Ensure space between active brand name and the switch link */
+.advisor-brand-switch { gap: 8px; }
+.advisor-brand-switch-link { margin-left: 6px; }
+.advisor-brand-switch-link::before { content: "· "; color: var(--adv-gray-2); margin-right: 4px; }
