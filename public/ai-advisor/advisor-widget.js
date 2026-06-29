@@ -39,6 +39,14 @@
     light: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>`,
   };
 
+  // Brands selectable in the internal tool. Key = value sent to the API.
+  const BRANDS = [
+    { key: '39dg',           label: '39DollarGlasses' },
+    { key: 'ocusafe',        label: 'Ocusafe' },
+    { key: 'onlinecontacts', label: 'Onlinecontacts' },
+  ];
+  const brandLabel = (k) => (BRANDS.find(b => b.key === k) || BRANDS[0]).label;
+
   function openZendesk(fallback, prefill) {
     if (typeof window.zE !== 'function') {
       window.open(fallback || 'https://www.39dollarglasses.com/contact', '_blank', 'noopener');
@@ -66,6 +74,12 @@
       this.sid = this._sid();
       this.open = false;
       this._lastQ = ''; this._lastType = '';
+
+      // Brand handling. Public widgets hardcode `brand`. The internal tool
+      // passes allowBrandSwitch:true to expose the switcher.
+      this.brand = cfg.brand || '39dg';
+      this.allowBrandSwitch = !!cfg.allowBrandSwitch;
+      this._brandPickerOpen = false;
       this._build();
     }
 
@@ -82,6 +96,28 @@
       this._panel.classList.remove('is-open');
       this._panel.setAttribute('aria-hidden', 'true');
       this._root.querySelector('.advisor-launcher').setAttribute('aria-expanded', 'false');
+    }
+
+    _toggleBrandPicker() {
+      if (!this._picker) return;
+      this._brandPickerOpen = !this._brandPickerOpen;
+      this._picker.classList.toggle('is-open', this._brandPickerOpen);
+      this._picker.setAttribute('aria-hidden', this._brandPickerOpen ? 'false' : 'true');
+    }
+
+    _setBrand(key) {
+      this.brand = key;
+      // Update active label in header
+      const active = this._root.querySelector('.advisor-brand-active');
+      if (active) active.textContent = brandLabel(key);
+      // Update active state in picker
+      this._picker.querySelectorAll('.advisor-brand-option').forEach(opt => {
+        opt.classList.toggle('is-active', opt.textContent === brandLabel(key));
+      });
+      this._toggleBrandPicker();
+      // Reset to home so the conversation starts fresh under the new brand
+      this._home();
+      this._track('advisor_brand_switched', { brand: key });
     }
 
     _build() {
@@ -113,6 +149,12 @@
       // Header — real logo via <img>, with a wordmark divider + role label
       const hdr = document.createElement('div');
       hdr.className = 'advisor-header';
+      const brandRow = this.allowBrandSwitch
+        ? `<button class="advisor-brand-switch" type="button" aria-label="Switch brand">
+             <span class="advisor-brand-active">${brandLabel(this.brand)}</span>
+             <span class="advisor-brand-switch-link">switch</span>
+           </button>`
+        : '';
       hdr.innerHTML = `
         <div class="advisor-header-left">
           <img class="advisor-logo" src="${this.logoUrl}" alt="39DollarGlasses" />
@@ -123,6 +165,7 @@
               <span class="advisor-header-status-dot" aria-hidden="true"></span>
               <span>Online now</span>
             </div>
+            ${brandRow}
           </div>
         </div>
       `;
@@ -132,6 +175,26 @@
       x.innerHTML = I.close;
       x.addEventListener('click', () => this._close());
       hdr.appendChild(x);
+
+      // Brand picker (inline list), hidden until "switch" is clicked
+      if (this.allowBrandSwitch) {
+        const switchBtn = hdr.querySelector('.advisor-brand-switch');
+        switchBtn.addEventListener('click', () => this._toggleBrandPicker());
+
+        const picker = document.createElement('div');
+        picker.className = 'advisor-brand-picker';
+        picker.setAttribute('aria-hidden', 'true');
+        BRANDS.forEach(b => {
+          const opt = document.createElement('button');
+          opt.type = 'button';
+          opt.className = 'advisor-brand-option' + (b.key === this.brand ? ' is-active' : '');
+          opt.textContent = b.label;
+          opt.addEventListener('click', () => this._setBrand(b.key));
+          picker.appendChild(opt);
+        });
+        this._picker = picker;
+        hdr.appendChild(picker);
+      }
       panel.appendChild(hdr);
 
       const body = document.createElement('div');
@@ -384,7 +447,7 @@
         const res = await fetch(this.api, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ question: q.trim(), page_context: this.ctx, session_id: this.sid, site: '39dollarglasses' }),
+          body: JSON.stringify({ question: q.trim(), page_context: this.ctx, session_id: this.sid, brand: this.brand, site: '39dollarglasses' }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         this._result(await res.json(), q);

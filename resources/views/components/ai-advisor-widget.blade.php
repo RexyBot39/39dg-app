@@ -16,6 +16,7 @@
 
 @props([
     'pageContext' => '',
+    'brand'       => '39dg',
     'supportUrl'  => 'https://www.39dollarglasses.com/contact',
     'apiUrl'      => '/advisor/ask',
     'enabled'     => true,
@@ -33,7 +34,9 @@
         window.advisorConfig = {
             apiUrl:      @js($apiUrl),
             pageContext: @js($pageContext),
+            brand:       @js($brand),
             supportUrl:  @js($supportUrl),
+            allowBrandSwitch: false,
         };
     </script>
     <script src="{{ asset('ai-advisor/advisor-widget.js') }}?v={{ filemtime(public_path('ai-advisor/advisor-widget.js')) }}" defer></script>
