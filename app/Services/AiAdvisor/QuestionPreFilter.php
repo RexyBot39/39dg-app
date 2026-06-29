@@ -10,15 +10,16 @@ namespace App\Services\AiAdvisor;
 class QuestionPreFilter
 {
     // Questions that require human support — never answer with AI
+    // Account-specific requests that genuinely need human/account access.
+    // General policy questions (returns, refunds, remakes, insurance) are now
+    // handled by the advisor via search_support_tickets, so they are NOT here.
     private const OUT_OF_SCOPE = [
         'my order', 'order status', 'order number', 'track my', 'tracking number',
         'where is my', 'shipping status', 'when will my',
         'my prescription', 'my account', 'my password', 'log in', 'login', 'sign in',
-        'refund', 'return my', 'send back', 'money back', 'charged me',
-        'remake', 'redo my', 'wrong lenses', 'wrong prescription',
+        'charged me', 'redo my',
         'billing', 'payment method', 'credit card', 'invoice',
         'my ticket', 'my case', 'my complaint', 'spoke with',
-        'insurance', 'vision plan', 'fsa', 'hsa',
         'discount code', 'promo code', 'coupon',
         'cancel my order', 'cancel order',
     ];
