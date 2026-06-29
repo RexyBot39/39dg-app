@@ -14,6 +14,11 @@ class AdvisorFunctionHandler
     public string  $specialtyBrandInterest = '';
     public string  $lensCategoryInterest   = '';
 
+    // Brand scope for ticket retrieval (set per-request by the controller)
+    public string  $brand = '39dg';
+
+    private ?TicketRetriever $ticketRetriever = null;
+
     public function __construct(
         private readonly KnowledgeBaseLoader $kb,
     ) {}
@@ -29,10 +34,41 @@ class AdvisorFunctionHandler
             'get_specialty_lens_info'=> $this->getSpecialtyLensInfo($args),
             'search_products'        => $this->searchProducts($args),
             'get_product_details'    => $this->getProductDetails($args),
+            'search_support_tickets' => $this->searchSupportTickets($args),
             'get_support_handoff'    => $this->getSupportHandoff($args),
             default                  => "Unknown function: {$functionName}. Please use get_support_handoff instead.",
         };
     }
+
+    private function searchSupportTickets(array $args): string
+    {
+        $query    = trim($args['query'] ?? '');
+        $category = $args['category'] ?? null;
+
+        if ($query === '') {
+            return json_encode(['error' => 'empty query']);
+        }
+
+        if ($this->ticketRetriever === null) {
+            $this->ticketRetriever = new TicketRetriever();
+        }
+
+        $results = $this->ticketRetriever->search($query, $this->brand, $category, 5);
+
+        if (empty($results)) {
+            return json_encode(['note' => 'No similar past tickets found for this brand.', 'results' => []]);
+        }
+
+        return json_encode([
+            'note' => 'Real anonymized resolutions for brand=' . $this->brand . '. Base your answer on how the team actually handled these. Do not invent policy beyond what these show.',
+            'results' => array_map(fn ($r) => [
+                'situation_and_resolution' => $r['content'],
+                'category'                 => $r['category'],
+                'outcome'                  => $r['resolution_type'],
+            ], $results),
+        ], JSON_UNESCAPED_SLASHES);
+    }
+
 
     public function getRetrievedProductIds(): array
     {

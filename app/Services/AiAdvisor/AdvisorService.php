@@ -40,6 +40,7 @@ Always retrieve information using a tool before answering — never answer from 
 - get_frame_guide — for frame sizing, materials, or styles
 - get_specialty_lens_info — for Neurolux, Lumeo, OcuSleep, Blue495, UltimateView HD, Transitions
 - search_products — to find product recommendations. Only recommend products this tool returns. Never invent names, prices, or URLs.
+- search_support_tickets — for any question about returns, refunds, remakes, warranty, exchanges, shipping problems, packaging, prescription issues, or "what happens if" policy scenarios. Call this FIRST for such questions and base your answer on how the team has actually handled it. Never invent or guess policy.
 - get_support_handoff — when a question is outside your scope
 
 ## Product catalog and sizing
@@ -146,6 +147,28 @@ PROMPT;
                                 'budget_tier'          => ['type' => 'string', 'enum' => ['budget', 'mid', 'premium']],
                                 'gender'               => ['type' => 'string', 'enum' => ['male', 'female', 'unisex']],
                             ],
+                        ],
+                    ],
+                    'required' => ['query'],
+                ],
+            ],
+        ],
+        [
+            'type' => 'function',
+            'function' => [
+                'name'        => 'search_support_tickets',
+                'description' => 'Search past resolved support tickets to see how the team has actually handled similar situations and what the real policy outcome was. Use this for questions about returns, refunds, remakes, warranties, shipping problems, prescription issues, packaging, or any "what happens if" policy question. Returns real anonymized resolutions for THIS brand only.',
+                'parameters'  => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'query' => [
+                            'type'        => 'string',
+                            'description' => 'A natural-language description of the customer situation to find similar past tickets for.',
+                        ],
+                        'category' => [
+                            'type' => 'string',
+                            'description' => 'Optional category filter.',
+                            'enum' => ['returns_rma','order_status','order_changes','warranty_replacement','patient_own_frame','general','shipping','billing_refund','prescription_issue','product_question','lens_issue','cancellation','other'],
                         ],
                     ],
                     'required' => ['query'],

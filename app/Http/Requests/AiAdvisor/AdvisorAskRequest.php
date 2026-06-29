@@ -17,6 +17,7 @@ class AdvisorAskRequest extends FormRequest
             'site'             => ['sometimes', 'string', 'max:50'],
             'page_context'     => ['sometimes', 'nullable', 'string', 'max:100'],
             'question'         => ['required', 'string', 'min:2', 'max:500'],
+            'brand'            => ['sometimes', 'string', 'in:39dg,ocusafe,ocusleep,onlinecontacts'],
             'selected_filters' => ['sometimes', 'nullable', 'array'],
             'selected_filters.frame_shape'          => ['sometimes', 'string', 'in:round,oval,rectangular,cat-eye,aviator,wayfarer,rimless,semi-rimless'],
             'selected_filters.frame_material'       => ['sometimes', 'string', 'in:titanium,acetate,metal,tr90,mixed'],
