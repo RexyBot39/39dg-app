@@ -7,6 +7,7 @@ use App\Http\Requests\AiAdvisor\AdvisorAskRequest;
 use App\Models\AiAdvisorLog;
 use App\Services\AiAdvisor\AdvisorFunctionHandler;
 use App\Services\AiAdvisor\AdvisorService;
+use App\Services\AiAdvisor\PrescriptionReader;
 use App\Services\AiAdvisor\KnowledgeBaseLoader;
 use App\Services\AiAdvisor\QuestionPreFilter;
 use Illuminate\Http\JsonResponse;
@@ -143,5 +144,42 @@ class AdvisorController extends Controller
     private function elapsedMs(float $startedAt): int
     {
         return (int) ((microtime(true) - $startedAt) * 1000);
+    }
+
+    /**
+     * Read an uploaded prescription image (base64) and return extracted values.
+     * The image is processed in-memory and never stored.
+     */
+    public function readPrescription(\Illuminate\Http\Request $request, PrescriptionReader $reader): JsonResponse
+    {
+        $validated = $request->validate([
+            'image'      => ['required', 'string'],       // base64, no data: prefix
+            'mime'       => ['required', 'string', 'in:image/jpeg,image/png,image/webp,application/pdf'],
+            'brand'      => ['sometimes', 'string', 'in:39dg,ocusafe,ocusleep,onlinecontacts'],
+            'session_id' => ['sometimes', 'uuid'],
+        ]);
+
+        $b64 = $validated['image'];
+        // Guard: cap decoded size ~10MB to avoid abuse.
+        if (strlen($b64) > 14_000_000) {
+            return response()->json(['error' => 'Image too large. Please upload a smaller photo.'], 422);
+        }
+
+        try {
+            $rx = $reader->read($b64, $validated['mime']);
+        } catch (Throwable $e) {
+            Log::error('[AdvisorController] Prescription read failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'error' => 'We could not read that prescription. Please try a clearer photo, or type your values.',
+            ], 422);
+        }
+
+        // Never store the image or the extracted PII beyond this response.
+        return response()->json([
+            'prescription' => $rx,
+            'disclaimer'   => 'Please double-check these values against your actual prescription. '
+                            . 'This helps you understand your options but is not a substitute for your '
+                            . 'prescription or an eye exam.',
+        ]);
     }
 }

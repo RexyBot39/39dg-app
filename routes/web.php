@@ -98,4 +98,7 @@ Route::prefix('advisor')->middleware(['throttle:chat'])->group(function () {
     Route::post('/ask', [\App\Http\Controllers\AiAdvisor\AdvisorController::class, 'ask'])
         ->name('advisor.ask');
 
+    \Illuminate\Support\Facades\Route::post('/read-prescription', [\App\Http\Controllers\AiAdvisor\AdvisorController::class, 'readPrescription'])
+        ->name('advisor.read-prescription');
+
 });
