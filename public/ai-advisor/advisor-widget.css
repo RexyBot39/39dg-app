@@ -697,3 +697,69 @@
 .advisor-brand-switch { gap: 8px; }
 .advisor-brand-switch-link { margin-left: 6px; }
 .advisor-brand-switch-link::before { content: "· "; color: var(--adv-gray-2); margin-right: 4px; }
+
+/* ── Conversation thread ── */
+.advisor-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.advisor-startover {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--adv-gray-2);
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  margin-bottom: 4px;
+}
+.advisor-startover:hover { color: var(--adv-ink); }
+
+/* User question bubble — right-aligned */
+.advisor-q { display: flex; justify-content: flex-end; }
+.advisor-q-bubble {
+  background: var(--adv-orange);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 14px 14px 4px 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 85%;
+  white-space: pre-wrap;
+}
+
+/* Answer block — left-aligned */
+.advisor-a {
+  background: var(--adv-paper);
+  border: 1px solid var(--adv-line);
+  border-radius: 4px 14px 14px 14px;
+  padding: 14px 16px;
+  max-width: 92%;
+  align-self: flex-start;
+}
+.advisor-a.advisor-loading {
+  padding: 14px 16px;
+  display: inline-flex;
+}
+
+/* Pin the input to the bottom in thread mode */
+#advisor-widget .advisor-panel .advisor-input {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--adv-line);
+}
+
+/* In thread mode, let the thread own the scrolling and pin the input.
+   :has() lets the body drop its own padding/scroll when a thread is present. */
+.advisor-body:has(.advisor-thread) {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}

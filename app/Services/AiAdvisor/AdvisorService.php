@@ -303,7 +303,7 @@ PROMPT;
     /**
      * @return array The structured advisor response
      */
-    public function ask(string $question, string $pageContext = '', array $selectedFilters = []): array
+    public function ask(string $question, string $pageContext = '', array $selectedFilters = [], array $history = []): array
     {
         $apiKey = config('ai-advisor.openai.api_key');
         $model  = config('ai-advisor.openai.model', 'gpt-4o');
@@ -319,8 +319,22 @@ PROMPT;
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user',   'content' => $userMessage],
         ];
+
+        // Thread prior conversation turns (lean: question + short answer text),
+        // capped to the last 6 turns to bound token cost.
+        foreach (array_slice($history, -6) as $turn) {
+            $q = trim((string)($turn['question'] ?? ''));
+            $a = trim((string)($turn['answer'] ?? ''));
+            if ($q !== '') {
+                $messages[] = ['role' => 'user', 'content' => $q];
+            }
+            if ($a !== '') {
+                $messages[] = ['role' => 'assistant', 'content' => $a];
+            }
+        }
+
+        $messages[] = ['role' => 'user', 'content' => $userMessage];
 
         $totalTokens = 0;
 

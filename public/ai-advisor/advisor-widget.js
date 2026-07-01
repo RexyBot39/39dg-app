@@ -74,6 +74,8 @@
       this.sid = this._sid();
       this.open = false;
       this._lastQ = ''; this._lastType = '';
+      this.turns = [];           // conversation history for this open session
+      this._threadMode = false;  // false = topics screen, true = active thread
 
       // Brand handling. Public widgets hardcode `brand`. The internal tool
       // passes allowBrandSwitch:true to expose the switcher.
@@ -93,6 +95,8 @@
     }
     _close() {
       this.open = false;
+      this.turns = [];
+      this._threadMode = false;
       this._panel.classList.remove('is-open');
       this._panel.setAttribute('aria-hidden', 'true');
       this._root.querySelector('.advisor-launcher').setAttribute('aria-expanded', 'false');
@@ -221,6 +225,9 @@
 
     _home() {
       this._clear();
+      this.turns = [];
+      this._threadMode = false;
+      this._thread = null;
 
       const greet = document.createElement('div');
       greet.className = 'advisor-greeting';
@@ -251,12 +258,16 @@
       div.textContent = 'or ask anything';
       this._body.appendChild(div);
 
+      this._buildInput();
+    }
+
+    _buildInput() {
       const input = document.createElement('div');
       input.className = 'advisor-input';
 
       const ta = document.createElement('textarea');
       ta.className = 'advisor-textarea';
-      ta.placeholder = 'e.g. What lens coating is best for screen time?';
+      ta.placeholder = 'Ask a question…';
       ta.rows = 2; ta.maxLength = 500;
       ta.setAttribute('aria-label', 'Your question');
 
@@ -439,22 +450,168 @@
       openZendesk(this.support, this._lastQ ? prefillMsg(this._lastQ, this._lastType) : null);
     }
 
+    _enterThreadMode() {
+      this._threadMode = true;
+      this._clear();
+      // Scrolling thread container
+      const thread = document.createElement('div');
+      thread.className = 'advisor-thread';
+      this._thread = thread;
+      this._body.appendChild(thread);
+      // Persistent input pinned below the thread
+      this._buildInput();
+      // A subtle "start over" control in the header area of the thread
+      const startOver = document.createElement('button');
+      startOver.className = 'advisor-startover';
+      startOver.type = 'button';
+      startOver.innerHTML = `${I.back} Start over`;
+      startOver.addEventListener('click', () => this._home());
+      thread.appendChild(startOver);
+    }
+
+    _appendQuestion(q) {
+      const row = document.createElement('div');
+      row.className = 'advisor-q';
+      const bubble = document.createElement('div');
+      bubble.className = 'advisor-q-bubble';
+      bubble.textContent = q;
+      row.appendChild(bubble);
+      this._thread.appendChild(row);
+    }
+
+    _appendLoading() {
+      const w = document.createElement('div');
+      w.className = 'advisor-a advisor-loading';
+      w.setAttribute('aria-live', 'polite');
+      const d = document.createElement('div');
+      d.className = 'advisor-dots';
+      d.setAttribute('role', 'status');
+      d.setAttribute('aria-label', 'Loading');
+      [0,1,2].forEach(() => d.appendChild(document.createElement('span')));
+      w.appendChild(d);
+      this._thread.appendChild(w);
+      return w;
+    }
+
+    _appendAnswer(data) {
+      const block = document.createElement('div');
+      block.className = 'advisor-a';
+
+      if (data.short_answer) {
+        const a = document.createElement('p');
+        a.className = 'advisor-answer';
+        a.textContent = data.short_answer;
+        block.appendChild(a);
+      }
+
+      if (data.educational_points?.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'advisor-bullets';
+        data.educational_points.forEach(pt => {
+          const li = document.createElement('li');
+          li.innerHTML = I.check;
+          const sp = document.createElement('span');
+          sp.textContent = pt;
+          li.appendChild(sp);
+          ul.appendChild(li);
+        });
+        block.appendChild(ul);
+      }
+
+      if (data.recommended_products?.length) {
+        const lbl = document.createElement('div');
+        lbl.className = 'advisor-products-label';
+        lbl.textContent = 'Recommended for you';
+        block.appendChild(lbl);
+        const list = document.createElement('div');
+        list.className = 'advisor-products';
+        data.recommended_products.forEach(pp => {
+          list.appendChild(this._card(pp));
+          this._track('advisor_product_shown', { product_id: pp.product_id });
+        });
+        block.appendChild(list);
+      }
+
+      if (data.support_handoff?.needed)
+        block.appendChild(this._handoffCard(data.support_handoff.message));
+
+      if (data.disclaimer) {
+        const d = document.createElement('p');
+        d.className = 'advisor-disclaimer';
+        d.textContent = data.disclaimer;
+        block.appendChild(d);
+      }
+
+      this._thread.appendChild(block);
+    }
+
+    _appendError() {
+      const block = document.createElement('div');
+      block.className = 'advisor-a';
+      const e = document.createElement('div');
+      e.className = 'advisor-error';
+      e.setAttribute('role', 'alert');
+      e.textContent = 'Something went wrong. Please try again or start a live chat.';
+      block.appendChild(e);
+      block.appendChild(this._handoffCard(null));
+      this._thread.appendChild(block);
+    }
+
+    _scrollThread() {
+      if (this._thread) this._thread.scrollTop = this._thread.scrollHeight;
+    }
+
+    _setInputEnabled(on) {
+      const ta = this._root.querySelector('.advisor-textarea');
+      const send = this._root.querySelector('.advisor-send');
+      if (ta) ta.disabled = !on;
+      if (send) send.disabled = !on;
+      if (on && ta) { ta.value = ''; ta.focus(); }
+    }
+
     async _ask(q) {
       if (!q?.trim()) return;
+      q = q.trim();
       this._track('advisor_question_asked', { question_length: q.length });
-      this._loading();
+
+      // First question transitions from topics screen into thread mode.
+      if (!this._threadMode) this._enterThreadMode();
+
+      // Show the user's question in the thread immediately.
+      this._appendQuestion(q);
+      const loadingEl = this._appendLoading();
+      this._scrollThread();
+
+      // Disable input while awaiting the answer.
+      this._setInputEnabled(false);
+
       try {
         const res = await fetch(this.api, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ question: q.trim(), page_context: this.ctx, session_id: this.sid, brand: this.brand, site: '39dollarglasses' }),
+          body: JSON.stringify({
+            question: q,
+            page_context: this.ctx,
+            session_id: this.sid,
+            brand: this.brand,
+            site: '39dollarglasses',
+            history: this.turns.slice(-6),
+          }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        this._result(await res.json(), q);
+        const data = await res.json();
+        loadingEl.remove();
+        this._appendAnswer(data);
+        this.turns.push({ question: q, answer: data.short_answer || '' });
+        this._track('advisor_response_received', { answer_type: data.answer_type });
       } catch (e) {
         console.error('[Advisor]', e);
-        this._error();
+        loadingEl.remove();
+        this._appendError();
         this._track('advisor_error', { error: e.message });
+      } finally {
+        this._setInputEnabled(true);
+        this._scrollThread();
       }
     }
 

@@ -28,6 +28,7 @@ class AdvisorController extends Controller
         $selectedFilters= $request->input('selected_filters', []);
         $sessionId      = $request->input('session_id');
         $brand          = $request->input('brand', '39dg');
+        $history        = $request->input('history', []);
         $ipHash         = hash('sha256', $request->ip() . config('app.key'));
 
         // --- 1. Pre-filter (fast PHP check, no OpenAI call) ------------------
@@ -75,7 +76,7 @@ class AdvisorController extends Controller
             // Re-bind the advisor service with this request's fresh handler
             $advisorService = new AdvisorService($handler);
 
-            $aiResponse = $advisorService->ask($question, $pageContext, $selectedFilters);
+            $aiResponse = $advisorService->ask($question, $pageContext, $selectedFilters, $history);
 
             $tokens      = $aiResponse['_tokens_used'] ?? null;
             $productIds  = $handler->getRetrievedProductIds();
