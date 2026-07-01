@@ -8,6 +8,7 @@
 
   // Topic rows — icon + label + question
   const TOPICS = [
+    { ico: 'scan',  label: 'Read my prescription',        q: '__READ_RX__' },
     { ico: 'lens',  label: 'Help me choose lenses',     q: 'Help me understand my lens options. What are the main types?' },
     { ico: 'frame', label: 'Help me choose frames',     q: 'How do I choose the right frames for me?' },
     { ico: 'prog',  label: 'Progressive lenses',        q: 'What are progressive lenses and how do they work?' },
@@ -28,6 +29,7 @@
     send:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/></svg>`,
     chat:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
     check:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`,
+    scan:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>`,
   };
 
   const TOPIC_ICONS = {
@@ -37,6 +39,7 @@
     blue:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`,
     rx:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h6a4 4 0 0 1 0 8H5zM5 12l8 8M11 16l5-5"/></svg>`,
     light: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>`,
+    scan:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>`,
   };
 
   // Brands selectable in the internal tool. Key = value sent to the API.
@@ -68,6 +71,7 @@
   class AdvisorWidget {
     constructor(cfg = {}) {
       this.api = cfg.apiUrl || '/advisor/ask';
+      this.rxApi = this.api.replace(/\/ask$/, '/read-prescription');
       this.ctx = cfg.pageContext || '';
       this.support = cfg.supportUrl || 'https://www.39dollarglasses.com/contact';
       this.logoUrl = cfg.logoUrl || '/ai-advisor/sloan-ai-logo.svg';
@@ -292,7 +296,18 @@
       });
       send.addEventListener('click', () => { if (ta.value.trim()) this._ask(ta.value.trim()); });
 
-      foot.append(cc, send);
+      const rxBtn = document.createElement('button');
+      rxBtn.className = 'advisor-rx-btn';
+      rxBtn.type = 'button';
+      rxBtn.title = 'Read my prescription';
+      rxBtn.setAttribute('aria-label', 'Read my prescription');
+      rxBtn.innerHTML = I.scan;
+      rxBtn.addEventListener('click', () => this._startRxUpload());
+
+      const btnGroup = document.createElement('div');
+      btnGroup.className = 'advisor-input-btns';
+      btnGroup.append(rxBtn, send);
+      foot.append(cc, btnGroup);
       input.append(ta, foot);
       this._body.appendChild(input);
     }
@@ -569,9 +584,202 @@
       if (on && ta) { ta.value = ''; ta.focus(); }
     }
 
+    _startRxUpload() {
+      this._track('advisor_rx_upload_started');
+      let inp = this._rxInput;
+      if (!inp) {
+        inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/jpeg,image/png,image/webp,application/pdf';
+        inp.style.display = 'none';
+        inp.addEventListener('change', () => {
+          const f = inp.files && inp.files[0];
+          if (f) this._readRxFile(f);
+          inp.value = '';
+        });
+        this._root.appendChild(inp);
+        this._rxInput = inp;
+      }
+      inp.click();
+    }
+
+    _readRxFile(file) {
+      const okTypes = ['image/jpeg','image/png','image/webp','application/pdf'];
+      if (!okTypes.includes(file.type)) {
+        if (!this._threadMode) this._enterThreadMode();
+        this._appendRxError('That file type is not supported. Please upload a JPG, PNG, or PDF.');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        if (!this._threadMode) this._enterThreadMode();
+        this._appendRxError('That file is too large. Please upload an image under 10MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const b64 = String(reader.result).split(',')[1] || '';
+        this._uploadRx(b64, file.type);
+      };
+      reader.onerror = () => {
+        if (!this._threadMode) this._enterThreadMode();
+        this._appendRxError('Could not read that file. Please try again.');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async _uploadRx(b64, mime) {
+      if (!this._threadMode) this._enterThreadMode();
+      this._appendQuestion('Reading my prescription…');
+      const loadingEl = this._appendLoading();
+      this._scrollThread();
+      try {
+        const res = await fetch(this.rxApi, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ image: b64, mime, brand: this.brand, session_id: this.sid }),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        loadingEl.remove();
+        this._showRxConfirm(data.prescription || {}, data.disclaimer || '');
+        this._track('advisor_rx_read_ok', { confidence: (data.prescription || {}).confidence });
+      } catch (e) {
+        console.error('[Advisor] Rx read', e);
+        loadingEl.remove();
+        this._appendRxError('We could not read that prescription. Please try a clearer photo, or type your values.');
+        this._track('advisor_rx_read_error', { error: e.message });
+      } finally {
+        this._scrollThread();
+      }
+    }
+
+    _appendRxError(msg) {
+      const block = document.createElement('div');
+      block.className = 'advisor-a';
+      const e = document.createElement('div');
+      e.className = 'advisor-error';
+      e.setAttribute('role', 'alert');
+      e.textContent = msg;
+      block.appendChild(e);
+      this._thread.appendChild(block);
+      this._scrollThread();
+    }
+
+    _showRxConfirm(rx, disclaimer) {
+      const isContacts = rx.type === 'contacts';
+      const block = document.createElement('div');
+      block.className = 'advisor-a advisor-rx-card';
+
+      const title = document.createElement('div');
+      title.className = 'advisor-rx-title';
+      title.textContent = "Here's what I read — please check and correct anything:";
+      block.appendChild(title);
+
+      // Build an editable grid. Columns depend on type.
+      const cols = isContacts
+        ? [['sph','SPH'], ['bc','BC'], ['dia','DIA'], ['cyl','CYL'], ['axis','AXIS']]
+        : [['sph','SPH'], ['cyl','CYL'], ['axis','AXIS'], ['add','ADD']];
+
+      const table = document.createElement('div');
+      table.className = 'advisor-rx-grid';
+      table.style.gridTemplateColumns = `64px repeat(${cols.length}, 1fr)`;
+
+      // header row
+      table.appendChild(this._rxCell('', 'hdr'));
+      cols.forEach(([, label]) => table.appendChild(this._rxCell(label, 'hdr')));
+
+      // OD / OS rows
+      ['od','os'].forEach(eye => {
+        table.appendChild(this._rxCell(eye.toUpperCase(), 'rowlbl'));
+        cols.forEach(([key]) => {
+          const cell = document.createElement('div');
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'advisor-rx-input';
+          input.dataset.eye = eye;
+          input.dataset.key = key;
+          input.value = (rx[eye] && rx[eye][key]) ? rx[eye][key] : '';
+          cell.appendChild(input);
+          table.appendChild(cell);
+        });
+      });
+      block.appendChild(table);
+
+      // PD field
+      const pdWrap = document.createElement('div');
+      pdWrap.className = 'advisor-rx-pd';
+      const pdLbl = document.createElement('span');
+      pdLbl.textContent = 'PD';
+      const pdInput = document.createElement('input');
+      pdInput.type = 'text';
+      pdInput.className = 'advisor-rx-input advisor-rx-pd-input';
+      pdInput.dataset.key = 'pd';
+      pdInput.value = rx.pd || '';
+      pdWrap.append(pdLbl, pdInput);
+      block.appendChild(pdWrap);
+
+      this._rxType = rx.type || 'glasses';
+
+      if (disclaimer) {
+        const dis = document.createElement('p');
+        dis.className = 'advisor-disclaimer';
+        dis.textContent = disclaimer;
+        block.appendChild(dis);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'advisor-rx-actions';
+      const confirm = document.createElement('button');
+      confirm.className = 'advisor-send advisor-rx-confirm';
+      confirm.textContent = 'Confirm & get recommendations';
+      confirm.addEventListener('click', () => this._confirmRx(block));
+      const redo = document.createElement('button');
+      redo.className = 'advisor-rx-redo';
+      redo.textContent = 'Re-upload';
+      redo.addEventListener('click', () => this._startRxUpload());
+      actions.append(confirm, redo);
+      block.appendChild(actions);
+
+      this._thread.appendChild(block);
+      this._scrollThread();
+    }
+
+    _rxCell(text, kind) {
+      const c = document.createElement('div');
+      c.className = 'advisor-rx-' + (kind || 'cell');
+      c.textContent = text;
+      return c;
+    }
+
+    _confirmRx(block) {
+      const vals = { od: {}, os: {}, pd: '' };
+      block.querySelectorAll('.advisor-rx-input').forEach(inp => {
+        const v = inp.value.trim();
+        if (inp.dataset.key === 'pd') { vals.pd = v; return; }
+        vals[inp.dataset.eye][inp.dataset.key] = v;
+      });
+
+      const fmtEye = (e) => Object.entries(e)
+        .filter(([, v]) => v !== '')
+        .map(([k, v]) => `${k.toUpperCase()} ${v}`).join(', ');
+
+      const odStr = fmtEye(vals.od);
+      const osStr = fmtEye(vals.os);
+      const pdStr = vals.pd ? `, PD ${vals.pd}` : '';
+      const typeStr = this._rxType === 'contacts' ? 'contact lens' : 'eyeglass';
+
+      const q = `Here is my ${typeStr} prescription. Right eye (OD): ${odStr || 'n/a'}. `
+        + `Left eye (OS): ${osStr || 'n/a'}${pdStr}. `
+        + `Based on this, what lens options do you recommend for me?`;
+
+      this._track('advisor_rx_confirmed');
+      this._ask(q);
+    }
+
     async _ask(q) {
       if (!q?.trim()) return;
       q = q.trim();
+      if (q === '__READ_RX__') { this._startRxUpload(); return; }
       this._track('advisor_question_asked', { question_length: q.length });
 
       // First question transitions from topics screen into thread mode.

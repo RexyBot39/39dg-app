@@ -36,6 +36,7 @@ Rules:
 - For glasses: sph, cyl, axis, add (bc/dia empty).
 - For contacts: sph, bc (base curve), dia (diameter), cyl/axis if toric.
 - Keep signs (+/-) exactly as written. Preserve decimals (e.g. -2.50).
+- For PD, return the number only, no units (e.g. "63" not "63 mm").
 - If a field is not present, leave it "".
 - If the image is unreadable, not a prescription, or values are ambiguous,
   set confidence "low" and explain in notes.

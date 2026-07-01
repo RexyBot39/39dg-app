@@ -783,3 +783,43 @@
 
 /* Thicker, more defined outline around the whole widget */
 #advisor-widget .advisor-panel { border: 2px solid var(--adv-gray-3); }
+
+/* ── Prescription reader ── */
+#advisor-widget .advisor-input-btns { display: flex; align-items: center; gap: 8px; }
+#advisor-widget .advisor-rx-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0;
+  background: var(--adv-paper); color: var(--adv-ink);
+  border: 1px solid var(--adv-line); border-radius: 8px;
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+#advisor-widget .advisor-rx-btn:hover { background: var(--adv-orange-soft); border-color: var(--adv-gray-3); }
+#advisor-widget .advisor-rx-btn svg { width: 18px; height: 18px; }
+
+#advisor-widget .advisor-rx-card { width: 100%; max-width: 100%; }
+#advisor-widget .advisor-rx-title { font-weight: 600; font-size: 14px; margin-bottom: 12px; color: var(--adv-ink); }
+
+#advisor-widget .advisor-rx-grid { display: grid; gap: 6px; align-items: center; margin-bottom: 12px; }
+#advisor-widget .advisor-rx-hdr {
+  font-size: 11px; font-weight: 700; color: var(--adv-gray);
+  text-align: center; text-transform: uppercase; letter-spacing: .03em;
+}
+#advisor-widget .advisor-rx-rowlbl { font-size: 13px; font-weight: 700; color: var(--adv-ink); }
+#advisor-widget .advisor-rx-input {
+  width: 100%; padding: 7px 6px; text-align: center;
+  font-size: 13px; font-family: inherit; color: var(--adv-ink);
+  border: 1px solid var(--adv-line); border-radius: 7px; background: var(--adv-paper);
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+#advisor-widget .advisor-rx-input:focus { border-color: var(--adv-ink); box-shadow: 0 0 0 3px rgba(28,28,30,.08); }
+#advisor-widget .advisor-rx-pd { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+#advisor-widget .advisor-rx-pd span { font-size: 13px; font-weight: 700; color: var(--adv-ink); }
+#advisor-widget .advisor-rx-pd-input { max-width: 90px; }
+
+#advisor-widget .advisor-rx-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#advisor-widget .advisor-rx-confirm { border: none; cursor: pointer; }
+#advisor-widget .advisor-rx-redo {
+  background: none; border: none; color: var(--adv-gray);
+  font-size: 13px; cursor: pointer; text-decoration: underline; padding: 4px;
+}
+#advisor-widget .advisor-rx-redo:hover { color: var(--adv-ink); }
