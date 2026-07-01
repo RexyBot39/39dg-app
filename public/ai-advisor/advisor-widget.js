@@ -63,14 +63,14 @@
     }
   }
   const prefillMsg = (q, t) =>
-    `Customer transferred from AI Lens & Frame Advisor.\n\nLast question: "${q}"\nResponse type: ${t || 'unknown'}\n\nPlease assist.`;
+    `Customer transferred from Sloan AI Support Assistant.\n\nLast question: "${q}"\nResponse type: ${t || 'unknown'}\n\nPlease assist.`;
 
   class AdvisorWidget {
     constructor(cfg = {}) {
       this.api = cfg.apiUrl || '/advisor/ask';
       this.ctx = cfg.pageContext || '';
       this.support = cfg.supportUrl || 'https://www.39dollarglasses.com/contact';
-      this.logoUrl = cfg.logoUrl || 'https://cdn.eyeglasses39.net/img/39dg-logo.svg';
+      this.logoUrl = cfg.logoUrl || '/ai-advisor/sloan-ai-logo.svg';
       this.sid = this._sid();
       this.open = false;
       this._lastQ = ''; this._lastType = '';
@@ -128,7 +128,7 @@
       const root = document.createElement('div');
       root.id = 'advisor-widget';
       root.setAttribute('role', 'complementary');
-      root.setAttribute('aria-label', 'Lens & Frame Advisor');
+      root.setAttribute('aria-label', 'Sloan AI Support Assistant');
       this._root = root;
       document.body.appendChild(root);
 
@@ -161,10 +161,10 @@
         : '';
       hdr.innerHTML = `
         <div class="advisor-header-left">
-          <img class="advisor-logo" src="${this.logoUrl}" alt="39DollarGlasses" />
+          <img class="advisor-logo" src="${this.logoUrl}" alt="Sloan AI" />
           <div class="advisor-header-divide"></div>
           <div class="advisor-header-meta">
-            <div class="advisor-header-title">Lens &amp; Frame Advisor</div>
+            <div class="advisor-header-title">Your AI Support Assistant</div>
             <div class="advisor-header-status">
               <span class="advisor-header-status-dot" aria-hidden="true"></span>
               <span>Online now</span>
