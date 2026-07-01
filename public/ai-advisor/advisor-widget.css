@@ -769,3 +769,10 @@
   gap: 0;
   overflow: hidden;
 }
+
+/* ── Padding fixes: outrank the #advisor-widget * reset (ID specificity) ── */
+#advisor-widget .advisor-thread { padding: 24px 24px; }
+#advisor-widget .advisor-a { padding: 18px 20px; }
+#advisor-widget .advisor-q-bubble { padding: 12px 18px; }
+#advisor-widget .advisor-textarea { padding: 14px 16px 4px; }
+#advisor-widget .advisor-input-foot { padding: 8px 16px 12px 16px; }
