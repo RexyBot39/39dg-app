@@ -299,7 +299,7 @@
 }
 .advisor-input:focus-within {
   border-color: var(--adv-orange-line);
-  box-shadow: 0 0 0 3.5px rgba(246,151,31,.1);
+  box-shadow: 0 0 0 3.5px rgba(28,28,30,.08);
 }
 .advisor-textarea {
   width: 100%;
@@ -319,7 +319,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px 10px 14px;
+  padding: 8px 14px 12px 14px;
 }
 .advisor-char { font-size: 11px; color: var(--adv-gray-3); }
 .advisor-char.warn { color: var(--adv-orange); }
@@ -337,13 +337,13 @@
   cursor: pointer;
   letter-spacing: -.01em;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(224,125,0,.2);
+  box-shadow: 0 1px 2px rgba(28,28,30,.15);
   transition: background .15s, transform .15s, box-shadow .15s;
 }
 .advisor-send:hover:not(:disabled) {
   background: var(--adv-orange-dk);
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(224,125,0,.28);
+  box-shadow: 0 3px 8px rgba(28,28,30,.22);
 }
 .advisor-send:active:not(:disabled) { transform: none; }
 .advisor-send:disabled { opacity: .4; cursor: not-allowed; }
@@ -728,11 +728,11 @@
 .advisor-q-bubble {
   background: var(--adv-orange);
   color: #fff;
-  padding: 12px 20px;
+  padding: 12px 18px;
   border-radius: 16px 16px 4px 16px;
   font-size: 14px;
   line-height: 1.45;
-  max-width: 80%;
+  max-width: 78%;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -743,8 +743,8 @@
   border: 1px solid var(--adv-line);
   border-radius: 4px 16px 16px 16px;
   padding: 18px 20px;
-  max-width: 100%;
-  align-self: stretch;
+  max-width: 90%;
+  align-self: flex-start;
 }
 .advisor-a.advisor-loading {
   padding: 18px 20px;
