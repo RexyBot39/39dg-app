@@ -776,3 +776,10 @@
 #advisor-widget .advisor-q-bubble { padding: 12px 18px; }
 #advisor-widget .advisor-textarea { padding: 14px 16px 4px; }
 #advisor-widget .advisor-input-foot { padding: 8px 16px 12px 16px; }
+
+/* Topics/opening screen padding: outrank the #advisor-widget * reset */
+#advisor-widget .advisor-body { padding: 24px 22px; }
+#advisor-widget .advisor-body:has(.advisor-thread) { padding: 0; }
+
+/* Thicker, more defined outline around the whole widget */
+#advisor-widget .advisor-panel { border: 2px solid var(--adv-gray-3); }
