@@ -102,6 +102,7 @@
   height: var(--adv-h);
   background: var(--adv-paper);
   border-radius: var(--adv-r-lg);
+  border: 1px solid var(--adv-line);
   box-shadow: var(--adv-sh-xl);
   display: flex;
   flex-direction: column;
