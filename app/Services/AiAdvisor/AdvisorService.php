@@ -69,6 +69,8 @@ For answer_type use:
 - "fallback" — for anything else out of scope
 
 Keep short_answer concise (2–4 sentences). Use educational_points as bullet points for key takeaways. Set disclaimer when discussing specialty lenses or medical-adjacent topics.
+
+In follow_up_questions, suggest up to 3 natural questions the user is likely to ask next, phrased in the first person exactly as the user would type them (short, ideally under 8 words each, e.g. "How do I measure my PD?"). Base them on the current topic and answer. Return an empty array for support handoffs, out-of-scope questions, or when no useful follow-up applies.
 PROMPT;
 
     private const TOOL_DEFINITIONS = [
@@ -213,7 +215,7 @@ PROMPT;
             'schema' => [
                 'type'                 => 'object',
                 'additionalProperties' => false,
-                'required'             => ['answer_type', 'short_answer', 'educational_points', 'recommended_products', 'disclaimer', 'support_handoff'],
+                'required'             => ['answer_type', 'short_answer', 'educational_points', 'recommended_products', 'disclaimer', 'support_handoff', 'follow_up_questions'],
                 'properties'           => [
                     'answer_type' => [
                         'type' => 'string',
@@ -221,6 +223,7 @@ PROMPT;
                     ],
                     'short_answer'       => ['type' => 'string'],
                     'educational_points' => ['type' => 'array', 'items' => ['type' => 'string']],
+                    'follow_up_questions' => ['type' => 'array', 'items' => ['type' => 'string']],
                     'recommended_products' => [
                         'type'  => 'array',
                         'items' => [
@@ -471,6 +474,7 @@ PROMPT;
             'answer_type'         => 'fallback',
             'short_answer'        => $msg,
             'educational_points'  => [],
+            'follow_up_questions' => [],
             'recommended_products'=> [],
             'disclaimer'          => null,
             'support_handoff'     => [
@@ -487,6 +491,7 @@ PROMPT;
             'answer_type'         => 'support_handoff',
             'short_answer'        => 'For this type of question, our customer support team is the right resource. They have access to your account and order details.',
             'educational_points'  => [],
+            'follow_up_questions' => [],
             'recommended_products'=> [],
             'disclaimer'          => null,
             'support_handoff'     => [
