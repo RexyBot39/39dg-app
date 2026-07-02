@@ -845,7 +845,18 @@
   function init() {
     if (document.getElementById('advisor-widget')) return;
     window._advisorWidget = new AdvisorWidget(window.advisorConfig || {});
-    window.__sloanOpen = function () { try { window._advisorWidget && window._advisorWidget._open(); } catch (e) {} };
+    window.__sloanOpen = function () {
+      try {
+        if (window._advisorWidget && typeof window._advisorWidget._open === 'function') {
+          window._advisorWidget._open();
+          return;
+        }
+      } catch (e) { console.error('[Sloan] open via instance failed', e); }
+      // Fallback: click the launcher element directly
+      var l = document.querySelector('#advisor-widget .advisor-launcher');
+      if (l) l.click();
+      else console.warn('[Sloan] launcher not found');
+    };
   }
   document.readyState === 'loading'
     ? document.addEventListener('DOMContentLoaded', init)
