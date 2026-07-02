@@ -845,6 +845,7 @@
   function init() {
     if (document.getElementById('advisor-widget')) return;
     window._advisorWidget = new AdvisorWidget(window.advisorConfig || {});
+    window.__sloanOpen = function () { try { window._advisorWidget && window._advisorWidget._open(); } catch (e) {} };
   }
   document.readyState === 'loading'
     ? document.addEventListener('DOMContentLoaded', init)
