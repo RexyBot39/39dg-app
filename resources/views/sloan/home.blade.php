@@ -80,7 +80,7 @@
 <body>
 
     <main class="hero">
-        <img class="hero-logo" src="{{ asset('ai-advisor/sloan-ai-logo.svg') }}" alt="Sloan AI" />
+        <img class="hero-logo" src="/ai-advisor/sloan-ai-logo.svg" alt="Sloan AI" />
         <h1>Meet Sloan, your AI support assistant</h1>
         <p>Get expert-backed help with lenses, frames, prescriptions, and orders — across 39DollarGlasses, OcuSafe, and OnlineContacts.</p>
         <button class="ask-btn" type="button" onclick="window.__sloanOpen && window.__sloanOpen()">

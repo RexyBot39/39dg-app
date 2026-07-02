@@ -27,7 +27,7 @@
 
     {{-- Output CSS inline so it loads regardless of @stack('styles') placement --}}
     @once
-        <link rel="stylesheet" href="{{ asset('ai-advisor/advisor-widget.css') }}?v={{ filemtime(public_path('ai-advisor/advisor-widget.css')) }}">
+        <link rel="stylesheet" href="/ai-advisor/advisor-widget.css?v={{ filemtime(public_path('ai-advisor/advisor-widget.css')) }}">
     @endonce
 
     <script>
@@ -39,6 +39,6 @@
             allowBrandSwitch: false,
         };
     </script>
-    <script src="{{ asset('ai-advisor/advisor-widget.js') }}?v={{ filemtime(public_path('ai-advisor/advisor-widget.js')) }}" defer></script>
+    <script src="/ai-advisor/advisor-widget.js?v={{ filemtime(public_path('ai-advisor/advisor-widget.js')) }}" defer></script>
 
 @endif

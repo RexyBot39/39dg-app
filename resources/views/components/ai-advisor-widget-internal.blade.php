@@ -17,7 +17,7 @@
 @if(config('ai-advisor.enabled', false) && $enabled)
 
     @once
-        <link rel="stylesheet" href="{{ asset('ai-advisor/advisor-widget.css') }}?v={{ filemtime(public_path('ai-advisor/advisor-widget.css')) }}">
+        <link rel="stylesheet" href="/ai-advisor/advisor-widget.css?v={{ filemtime(public_path('ai-advisor/advisor-widget.css')) }}">
     @endonce
 
     <script>
@@ -29,6 +29,6 @@
             allowBrandSwitch: true,
         };
     </script>
-    <script src="{{ asset('ai-advisor/advisor-widget.js') }}?v={{ filemtime(public_path('ai-advisor/advisor-widget.js')) }}" defer></script>
+    <script src="/ai-advisor/advisor-widget.js?v={{ filemtime(public_path('ai-advisor/advisor-widget.js')) }}" defer></script>
 
 @endif
