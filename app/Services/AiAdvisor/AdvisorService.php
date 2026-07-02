@@ -305,6 +305,11 @@ PROMPT;
      */
     public function ask(string $question, string $pageContext = '', array $selectedFilters = [], array $history = []): array
     {
+        // The tool-call loop can make several sequential OpenAI calls; give it
+        // headroom past PHP's default 30s so a normal multi-round request
+        // doesn't get killed mid-flight.
+        @set_time_limit(120);
+
         $apiKey = config('ai-advisor.openai.api_key');
         $model  = config('ai-advisor.openai.model', 'gpt-4o');
 
@@ -402,7 +407,8 @@ PROMPT;
     private function callOpenAi(string $apiKey, string $model, array $messages): array
     {
         $response = Http::withToken($apiKey)
-            ->timeout(30)
+            ->timeout(22)
+            ->connectTimeout(8)
             ->post('https://api.openai.com/v1/chat/completions', [
                 'model'           => $model,
                 'messages'        => $messages,
