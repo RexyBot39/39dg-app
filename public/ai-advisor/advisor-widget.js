@@ -557,6 +557,21 @@
         block.appendChild(d);
       }
 
+      if (data.follow_up_questions?.length) {
+        const chips = document.createElement('div');
+        chips.className = 'advisor-followups';
+        data.follow_up_questions.slice(0, 3).forEach(fq => {
+          if (!fq || !String(fq).trim()) return;
+          const chip = document.createElement('button');
+          chip.className = 'advisor-followup-chip';
+          chip.type = 'button';
+          chip.textContent = String(fq).trim();
+          chip.addEventListener('click', () => this._ask(String(fq).trim()));
+          chips.appendChild(chip);
+        });
+        if (chips.children.length) block.appendChild(chips);
+      }
+
       this._thread.appendChild(block);
     }
 

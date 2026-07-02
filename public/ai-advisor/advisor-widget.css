@@ -823,3 +823,31 @@
   font-size: 13px; cursor: pointer; text-decoration: underline; padding: 4px;
 }
 #advisor-widget .advisor-rx-redo:hover { color: var(--adv-ink); }
+
+/* ── Follow-up suggestion chips ── */
+#advisor-widget .advisor-followups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+#advisor-widget .advisor-followup-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--adv-paper);
+  color: var(--adv-ink);
+  border: 1px solid var(--adv-line);
+  border-radius: 16px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+}
+#advisor-widget .advisor-followup-chip:hover {
+  background: var(--adv-orange-soft);
+  border-color: var(--adv-gray-3);
+}
+#advisor-widget .advisor-followup-chip:active { transform: scale(.98); }
