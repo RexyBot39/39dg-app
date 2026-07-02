@@ -50,6 +50,26 @@
   ];
   const brandLabel = (k) => (BRANDS.find(b => b.key === k) || BRANDS[0]).label;
 
+  // Term -> canonical URL map for inline product links. Per brand.
+  // Longest terms first within each entry so multi-word matches win.
+  const LINK_MAP = {
+    '39dg': [
+      { terms: ['progressive lenses','progressives','progressive'], url: 'https://www.39dollarglasses.com/lens/progressive' },
+      { terms: ['single vision','single-vision'], url: 'https://www.39dollarglasses.com/lens/single-vision' },
+      { terms: ['lined bifocals','bifocals','bifocal'], url: 'https://www.39dollarglasses.com/lens/bifocal' },
+      { terms: ['blue light blocking','blue light','blue495','blue 495'], url: 'https://www.39dollarglasses.com/lens/blue495' },
+      { terms: ['neurolux','fl-41','fl41'], url: 'https://www.39dollarglasses.com/lens/neurolux' },
+      { terms: ['crizal prevencia','crizal','prevencia'], url: 'https://www.39dollarglasses.com/lens/prevencia' },
+      { terms: ['transitions','photochromic'], url: 'https://www.39dollarglasses.com/lens/transitions' },
+      { terms: ['varilux'], url: 'https://www.39dollarglasses.com/lens/varilux' },
+      { terms: ['workspace progressives','workspace'], url: 'https://www.39dollarglasses.com/lens/workspace' },
+      { terms: ['anti-reflective coating','anti-reflective','anti-glare','ar coating'], url: 'https://www.39dollarglasses.com/lens/ultimateview-anti-reflective-coating' },
+      { terms: ['polarized'], url: 'https://www.39dollarglasses.com/lens/ultimateview-polarized-sunglasses' },
+      { terms: ['lens replacement','re-lens','relens'], url: 'https://www.39dollarglasses.com/re-lens' },
+      { terms: ['smart glasses'], url: 'https://www.39dollarglasses.com/smart-glasses' },
+    ],
+  };
+
   function openZendesk(fallback, prefill) {
     if (typeof window.zE !== 'function') {
       window.open(fallback || 'https://www.39dollarglasses.com/contact', '_blank', 'noopener');
@@ -508,6 +528,64 @@
       return w;
     }
 
+    _linkTerms(root) {
+      const map = LINK_MAP[this.brand];
+      if (!map || !root) return;
+
+      // Flatten to {term, url} sorted by length (longest first) so multi-word
+      // phrases match before their sub-words.
+      const entries = [];
+      map.forEach(m => m.terms.forEach(t => entries.push({ term: t, url: m.url })));
+      entries.sort((a, b) => b.term.length - a.term.length);
+
+      const used = new Set();  // urls already linked once in this answer
+
+      const esc = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      entries.forEach(({ term, url }) => {
+        if (used.has(url)) return;
+        // word-boundary-ish, case-insensitive; allow terms with hyphens/spaces
+        const re = new RegExp('(^|[^A-Za-z0-9])(' + esc(term) + ')(?![A-Za-z0-9])', 'i');
+
+        // Walk text nodes; link the first match found.
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+          acceptNode: (n) => {
+            if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+            if (n.parentNode && n.parentNode.closest && n.parentNode.closest('a')) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          },
+        });
+        let node;
+        while ((node = walker.nextNode())) {
+          const m = node.nodeValue.match(re);
+          if (!m) continue;
+          const full = m[0];
+          const pre = m[1];          // boundary char (may be empty)
+          const matched = m[2];      // the actual term text as written
+          const idx = m.index + pre.length;
+
+          const before = node.nodeValue.slice(0, idx);
+          const after = node.nodeValue.slice(idx + matched.length);
+
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.className = 'advisor-inline-link';
+          a.textContent = matched;
+
+          const frag = document.createDocumentFragment();
+          if (before) frag.appendChild(document.createTextNode(before));
+          frag.appendChild(a);
+          if (after) frag.appendChild(document.createTextNode(after));
+
+          node.parentNode.replaceChild(frag, node);
+          used.add(url);
+          break; // first occurrence only
+        }
+      });
+    }
+
     _appendAnswer(data) {
       const block = document.createElement('div');
       block.className = 'advisor-a';
@@ -556,6 +634,9 @@
         d.textContent = data.disclaimer;
         block.appendChild(d);
       }
+
+      // Turn known lens/coating/category terms into inline product links.
+      this._linkTerms(block);
 
       if (data.follow_up_questions?.length) {
         const chips = document.createElement('div');

@@ -861,3 +861,17 @@
   background: var(--adv-line);
   border-color: var(--adv-gray-2);
 }
+
+/* Inline product links within answers — black underline */
+#advisor-widget .advisor-inline-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--adv-ink);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+#advisor-widget .advisor-inline-link:hover {
+  opacity: 0.65;
+}
