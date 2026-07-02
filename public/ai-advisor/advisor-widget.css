@@ -851,3 +851,13 @@
   border-color: var(--adv-gray-3);
 }
 #advisor-widget .advisor-followup-chip:active { transform: scale(.98); }
+
+/* Follow-up chips: light gray fill so they stand out from the white answer card */
+#advisor-widget .advisor-followup-chip {
+  background: var(--adv-orange-soft);
+  border-color: var(--adv-gray-3);
+}
+#advisor-widget .advisor-followup-chip:hover {
+  background: var(--adv-line);
+  border-color: var(--adv-gray-2);
+}
